@@ -10,7 +10,7 @@ This repository will be structured as a monorepo managing both the backend and w
 
 ### Backend
 
-- Java 21
+- Java 17
 - Spring Boot
 - Spring Web
 - Spring Data JPA
