@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-mobile-session-user-cascade
+      author: rider-companion
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: mobile_sessions
+            constraintName: fk_mobile_sessions_user
+        - addForeignKeyConstraint:
+            baseTableName: mobile_sessions
+            baseColumnNames: user_id
+            constraintName: fk_mobile_sessions_user
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE

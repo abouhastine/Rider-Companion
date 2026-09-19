@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Rider Companion", "slug": "rider-companion", "scheme": "ridercompanion", "version": "0.1.0", "orientation": "portrait",
+    "userInterfaceStyle": "automatic", "plugins": ["expo-router", "expo-secure-store", ["expo-local-authentication", {"faceIDPermission": "Use Face ID to unlock Rider Companion."}], ["expo-image-picker", {"photosPermission": "Allow Rider Companion to select a motorcycle photo."}]],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.ridercompanion.beta" },
+    "android": { "package": "com.ridercompanion.beta", "adaptiveIcon": { "backgroundColor": "#172033" } },
+    "extra": { "apiBaseUrl": "https://replace-with-demo-api.example" }
+  }
+}

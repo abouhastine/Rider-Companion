@@ -39,3 +39,9 @@ target/
 .vscode/
 
 .DS_Store
+
+# JavaScript and Expo build artifacts
+**/node_modules/
+**/dist/
+**/.expo/
+mobile-app/.env

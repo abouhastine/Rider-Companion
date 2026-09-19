@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient';
+import type { WebSession as Session } from '@rider-shared';
 
-export type Session = { token: string; expiresAt: string; user: { id: number; firstName: string; lastName: string; email: string } };
+export type { Session };
 export type MotorcycleApi = { id: number; brand: string; model: string; year: number; engineCapacity: number; power: number; fuelType: string; registrationNumber: string | null; purchaseDate: string | null; currentMileage: number; averageConsumption: number | null; primaryMotorcycle: boolean; hasImage: boolean };
 export type MotorcycleSummary = { id: number; brand: string; model: string };
 export type MaintenanceApi = { id: number; motorcycle: MotorcycleSummary; maintenanceType: string; status: 'COMPLETED' | 'PLANNED'; completionDate: string | null; plannedDate: string | null; mileage: number | null; plannedMileage: number | null; cost: number | null; serviceProvider: string | null; notes: string | null };

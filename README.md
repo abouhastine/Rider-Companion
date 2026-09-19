@@ -17,7 +17,8 @@ Rider Companion est une application destinée aux motards permettant de gérer l
 rider-companion/
 ├── backend/
 ├── web-app/
-├── android-app/
+├── mobile-app/
+├── shared/
 └── docs/
 
 ## Démarrer le backend en local
@@ -41,6 +42,25 @@ When the backend is running, OpenAPI documentation is available at:
 
 - Swagger UI: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 - OpenAPI JSON: [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)
+
+## Mobile beta
+
+The iOS and Android private beta lives in `mobile-app/` and uses Expo. It covers the rider MVP only: authentication, dashboard, garage, maintenance, rides, and profile settings.
+
+```bash
+cd mobile-app
+cp .env.example .env
+npm install
+npm run typecheck
+npm test
+npx expo start
+```
+
+Set `EXPO_PUBLIC_API_BASE_URL` to the supplied **HTTPS** demo API before starting or building the app. Never use production or identifiable rider data in this beta; all data and motorcycle photos must be synthetic or anonymized.
+
+Create internal builds with `npx eas build --profile ios-beta --platform ios` for TestFlight or `npx eas build --profile android-beta --platform android` for Play internal testing. EAS/store credentials and final bundle identifiers must be configured before submission. The beta is English-only, online-only, and excludes camera upload, notifications, offline mode, localization, GPS, weather, community features, and AI.
+
+See [the mobile-beta specification](docs/specs/rider-companion-mobile-beta-spec.md) and [implementation status](docs/specs/rider-companion-mobile-beta-implementation-status.md).
 ## diagramme UML
 ```text
 +------------------+

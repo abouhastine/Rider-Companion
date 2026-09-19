@@ -31,8 +31,13 @@ public class JwtService {
   }
 
   public IssuedToken issue(Long userId, String email) {
+    return issue(userId, email, expirySeconds);
+  }
+
+  /** Issues an access token with a caller-selected, bounded lifetime. */
+  public IssuedToken issue(Long userId, String email, long lifetimeSeconds) {
     Instant now = Instant.now();
-    Instant expiresAt = now.plusSeconds(expirySeconds);
+    Instant expiresAt = now.plusSeconds(lifetimeSeconds);
     String jti = UUID.randomUUID().toString();
     try {
       String header = encode(Map.of("alg", "HS256", "typ", "JWT"));

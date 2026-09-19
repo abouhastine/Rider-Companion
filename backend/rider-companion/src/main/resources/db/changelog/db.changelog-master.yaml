@@ -3,3 +3,7 @@ databaseChangeLog:
       file: db/changelog/changes/001-initial-schema.yaml
   - include:
       file: db/changelog/changes/002-auth-and-images.yaml
+  - include:
+      file: db/changelog/changes/003-mobile-sessions.yaml
+  - include:
+      file: db/changelog/changes/004-mobile-session-cascade.yaml

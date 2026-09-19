@@ -548,18 +548,9 @@ The rider profile may be accessed from the **App Bar**.
 - React Hook Form
 - Material UI
 
-### 13.3 Android App
+### 13.3 Mobile Beta (iOS and Android)
 
-Recommended option:
-
-- Kotlin
-- Jetpack Compose
-- Retrofit
-- ViewModel
-- Kotlin Coroutines
-- DataStore
-
-A local cache with Room may be added later.
+The private beta uses one English-only React Native/Expo application for iOS and Android, with Expo Router, TanStack Query, SecureStore, Local Authentication, and EAS builds. It is rider-only, online-only, and uses synthetic/anonymized demo data. Notifications, offline persistence, camera capture, localization, GPS/navigation, weather, community, and AI features remain future capabilities.
 
 ### 13.4 Repository Strategy
 
@@ -1064,15 +1055,15 @@ This section describes the long-term target architecture. The internship is **no
 - React Hook Form
 - Zod
 
-### Android App
+### Mobile App
 
-- Kotlin
-- Jetpack Compose
-- MVVM
-- Hilt
-- Retrofit
-- Kotlin Coroutines
-- DataStore
+- React Native
+- Expo / Expo Router
+- TypeScript
+- TanStack Query
+- Expo SecureStore
+- Expo Local Authentication
+- EAS Build
 
 ### DevOps
 
@@ -1103,4 +1094,4 @@ This section describes the long-term target architecture. The internship is **no
 - separate `development`, `staging`, and `production` environments;
 - Helm may be added later for application packaging and deployment.
 
-> **Note:** only the core technologies (Java, Spring Boot, Maven, Liquibase, PostgreSQL, React, Kotlin and Jetpack Compose) are expected during the internship. The remaining technologies belong to the post-internship roadmap.
+> **Note:** the beta selects React Native/Expo for its shared iOS/Android client. Kotlin/Jetpack Compose remains a possible future native Android direction, not the current beta implementation.
