@@ -63,7 +63,7 @@ export function SectionCard({
   sx?: object;
 }) {
   return (
-    <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, ...sx }}>
+    <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: 2, position: 'relative', overflow: 'hidden', ...sx }}>
       <Stack
         direction="row"
         justifyContent="space-between"
@@ -116,7 +116,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <Paper sx={{ py: 7, px: 3, textAlign: 'center', borderStyle: 'dashed', borderRadius: 3 }}>
+    <Paper sx={{ py: 7, px: 3, textAlign: 'center', borderStyle: 'dashed', borderColor: 'primary.main', borderRadius: 2 }}>
       <DirectionsBike color="primary" sx={{ fontSize: 42, mb: 1 }} />
       <Typography variant="h6">{title}</Typography>
       <Typography color="text.secondary" sx={{ maxWidth: 400, mx: 'auto', mt: 1, mb: 2.5 }}>
@@ -229,4 +229,8 @@ export function FormNotice({ children }: { children: ReactNode }) {
       {children}
     </Alert>
   );
+}
+
+export function FormSection({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return <Box sx={{ borderTop: '1px solid #34425f', pt: 2.5 }}><Stack direction="row" alignItems="center" spacing={1} mb={2}><Box color="secondary.main">{icon}</Box><Typography variant="overline">{title}</Typography></Stack>{children}</Box>;
 }

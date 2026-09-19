@@ -1,7 +1,8 @@
-import { Dashboard, DirectionsBike, Logout, Map, Menu, Settings, Build } from '@mui/icons-material';
+import { Dashboard, DirectionsBike, Logout, Map, Menu, Settings, Build, PlayArrow } from '@mui/icons-material';
 import {
   AppBar,
   Avatar,
+  Button,
   Box,
   Divider,
   Drawer,
@@ -26,14 +27,13 @@ const navigation = [
 function Navigation({ close }: { close?: () => void }) {
   const location = useLocation();
   return (
-    <Box sx={{ width: 260, height: '100%', p: 2 }}>
+    <Box sx={{ width: 280, height: '100%', p: 2.5, bgcolor: '#111b31', color: '#f1d2c9' }}>
       <Stack direction="row" alignItems="center" gap={1.25} px={1} py={1.5}>
         <Box
           sx={{
             width: 32,
             height: 32,
-            bgcolor: 'primary.main',
-            color: 'white',
+          bgcolor: 'primary.main', color: '#081224',
             borderRadius: 2,
             display: 'grid',
             placeItems: 'center',
@@ -41,10 +41,10 @@ function Navigation({ close }: { close?: () => void }) {
         >
           <DirectionsBike fontSize="small" />
         </Box>
-        <Typography fontWeight={850}>Rider Companion</Typography>
+        <Box><Typography fontWeight={900} sx={{ lineHeight: 1 }}>RIDER<br />COMPANION</Typography><Typography variant="caption" className="technical-label">Technical utility</Typography></Box>
       </Stack>
-      <Typography variant="overline" color="text.secondary" sx={{ px: 1, display: 'block', mt: 4 }}>
-        Workspace
+      <Typography variant="overline" color="secondary.main" sx={{ px: 1, display: 'block', mt: 5 }}>
+        Command center
       </Typography>
       <List>
         {navigation.map((item) => (
@@ -57,7 +57,7 @@ function Navigation({ close }: { close?: () => void }) {
             sx={{
               borderRadius: 2,
               mb: 0.5,
-              '&.active': { bgcolor: 'primary.light', color: 'primary.dark' },
+              color: 'inherit', '&.active': { bgcolor: 'primary.main', color: '#081224', boxShadow: '3px 3px 0 #742100' },
             }}
           >
             <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}>{item.icon}</ListItemIcon>
@@ -65,7 +65,7 @@ function Navigation({ close }: { close?: () => void }) {
           </ListItemButton>
         ))}
       </List>
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 3, borderColor: '#34425f' }} />
       <List>
         <ListItemButton component={NavLink} to="/profile" onClick={close} sx={{ borderRadius: 2 }}>
           <ListItemIcon sx={{ minWidth: 38 }}>
@@ -80,6 +80,7 @@ function Navigation({ close }: { close?: () => void }) {
           <ListItemText primary="Sign out" />
         </ListItemButton>
       </List>
+      <Button component={NavLink} to="/rides/new" fullWidth variant="contained" startIcon={<PlayArrow />} sx={{ mt: 'auto', position: 'absolute', bottom: 26, left: 20, width: 240 }}>Start ride</Button>
     </Box>
   );
 }
@@ -98,7 +99,7 @@ export function AppShell() {
       >
         <Drawer
           variant="permanent"
-          PaperProps={{ sx: { width: 260, border: 0, borderRight: '1px solid #e8ece7' } }}
+          PaperProps={{ sx: { width: 280, border: 0 } }}
         >
           <Navigation />
         </Drawer>
@@ -109,8 +110,7 @@ export function AppShell() {
         elevation={0}
         sx={{
           display: { md: 'none' },
-          bgcolor: 'rgba(255,255,255,.94)',
-          borderBottom: '1px solid #e8ece7',
+          bgcolor: '#111b31', color: '#eef1ff', borderBottom: '1px solid #34425f',
         }}
       >
         <Toolbar>
@@ -120,7 +120,7 @@ export function AppShell() {
           <Typography fontWeight={850} sx={{ flexGrow: 1, ml: 1 }}>
             Rider Companion
           </Typography>
-          <Avatar sx={{ width: 31, height: 31, bgcolor: 'primary.main' }}>A</Avatar>
+          <Avatar sx={{ width: 31, height: 31, bgcolor: 'primary.main', color: '#081224' }}>R</Avatar>
         </Toolbar>
       </AppBar>
       <Drawer open={open} onClose={() => setOpen(false)}>
@@ -139,19 +139,18 @@ export function AuthLayout() {
         minHeight: '100vh',
         display: 'grid',
         gridTemplateColumns: { md: '1fr 1.1fr' },
-        bgcolor: '#f7f8f5',
+        bgcolor: '#081224',
       }}
     >
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
-          bgcolor: 'primary.dark',
-          color: 'white',
+          bgcolor: '#111b31', color: 'white',
           p: 7,
           flexDirection: 'column',
           justifyContent: 'space-between',
           backgroundImage:
-            'linear-gradient(145deg, rgba(21,57,38,.92), rgba(20,31,24,.65)), url(https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1400&q=80)',
+            'linear-gradient(145deg, rgba(8,18,36,.95), rgba(8,18,36,.55)), url(https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1400&q=80)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}

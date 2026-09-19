@@ -1,4 +1,4 @@
-import { Build, DirectionsBike, Map, TrendingUp } from '@mui/icons-material';
+import { Build, DirectionsBike, Map, TrendingUp, Speed, Verified } from '@mui/icons-material';
 import { Box, Button, Grid2 as Grid, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +38,7 @@ export function DashboardPage() {
       <Grid container spacing={2.25} mb={3}>
         {stats.map((stat) => (
           <Grid size={{ xs: 6, md: 3 }} key={stat.label}>
-            <SectionCard>
+            <SectionCard sx={{ borderColor: '#40506f' }}>
               <Stack direction="row" justifyContent="space-between" alignItems="start">
                 <Box>
                   <Typography color="text.secondary" variant="body2">
@@ -48,7 +48,7 @@ export function DashboardPage() {
                     {stat.value}
                   </Typography>
                 </Box>
-                <Box color="primary.main">{stat.icon}</Box>
+                <Box color="primary.main" sx={{ p: 1, border: '1px solid #6a3a2e', borderRadius: 1 }}>{stat.icon}</Box>
               </Stack>
             </SectionCard>
           </Grid>
@@ -71,19 +71,22 @@ export function DashboardPage() {
                   borderRadius: 2,
                   overflow: 'hidden',
                   position: 'relative',
-                  bgcolor: 'primary.dark',
+                  bgcolor: '#0b172a',
                   color: 'white',
+                  backgroundImage: `linear-gradient(90deg, rgba(8,18,36,.94), rgba(8,18,36,.3)), url(https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1400&q=80)`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
               >
                 <Stack sx={{ height: '100%', minHeight: 270, p: 3.5 }} justifyContent="flex-end">
+                  <Typography variant="overline" color="primary.light">Selected vehicle</Typography>
                   <Typography variant="h4">
                     {bike.brand} {bike.model}
                   </Typography>
                   <Typography sx={{ opacity: 0.8 }}>
                     {bike.year} · {bike.currentMileage?.toLocaleString()} km
                   </Typography>
+                  <Stack direction="row" spacing={1.5} mt={2}><Box sx={{ border: '1px solid #40506f', bgcolor: 'rgba(8,18,36,.7)', px: 1.5, py: 1, borderRadius: 1 }}><Typography variant="overline">Odometer</Typography><Typography><Speed fontSize="small" /> {bike.currentMileage?.toLocaleString()} km</Typography></Box><Box sx={{ border: '1px solid #40506f', bgcolor: 'rgba(8,18,36,.7)', px: 1.5, py: 1, borderRadius: 1 }}><Typography variant="overline">Status</Typography><Typography color="secondary.main"><Verified fontSize="small" /> Ready</Typography></Box></Stack>
                   <Button
                     component={RouterLink}
                     to={`/garage/${bike.id}/edit`}
