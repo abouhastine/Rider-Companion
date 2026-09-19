@@ -12,6 +12,7 @@ import com.rider.companion.repository.MotorcycleRepository;
 import com.rider.companion.repository.RideRepository;
 import com.rider.companion.repository.RiderRepository;
 import com.rider.companion.repository.UserRepository;
+import com.rider.companion.repository.MotorcycleImageRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -26,18 +27,21 @@ public class DashboardService {
   private final MotorcycleRepository motorcycleRepository;
   private final MaintenanceRecordRepository maintenanceRecordRepository;
   private final RideRepository rideRepository;
+  private final MotorcycleImageRepository motorcycleImageRepository;
 
   public DashboardService(
       UserRepository userRepository,
       RiderRepository riderRepository,
       MotorcycleRepository motorcycleRepository,
       MaintenanceRecordRepository maintenanceRecordRepository,
-      RideRepository rideRepository) {
+      RideRepository rideRepository,
+      MotorcycleImageRepository motorcycleImageRepository) {
     this.userRepository = userRepository;
     this.riderRepository = riderRepository;
     this.motorcycleRepository = motorcycleRepository;
     this.maintenanceRecordRepository = maintenanceRecordRepository;
     this.rideRepository = rideRepository;
+    this.motorcycleImageRepository = motorcycleImageRepository;
   }
 
   public DashboardResponse getDashboard(Long userId) {
@@ -68,7 +72,7 @@ public class DashboardService {
   private DashboardResponse.PrimaryMotorcycle toPrimaryMotorcycle(MotocycleEntity motorcycle) {
     return new DashboardResponse.PrimaryMotorcycle(
         motorcycle.getId(), motorcycle.getBrand(), motorcycle.getModel(), motorcycle.getYear(),
-        motorcycle.getCurrentMileage(), motorcycle.getImageUrl());
+        motorcycle.getCurrentMileage(), motorcycleImageRepository.findByMotorcycleId(motorcycle.getId()).isPresent());
   }
 
   private DashboardResponse.MaintenanceSummary toMaintenanceSummary(

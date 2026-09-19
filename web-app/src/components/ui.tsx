@@ -176,7 +176,7 @@ export function FormSelect<T extends FieldValues>({
 }: {
   name: Path<T>;
   label: string;
-  values: string[];
+  values: Array<string | { value: string; label: string }>;
   control: Control<T>;
   errors: FieldErrors<T>;
 }) {
@@ -189,11 +189,11 @@ export function FormSelect<T extends FieldValues>({
         name={name}
         render={({ field }) => (
           <Select {...field} label={label}>
-            {values.map((value) => (
-              <MenuItem value={value} key={value}>
-                {value.replace(/_/g, ' ')}
-              </MenuItem>
-            ))}
+            {values.map((option) => {
+              const value = typeof option === 'string' ? option : option.value;
+              const label = typeof option === 'string' ? option.replace(/_/g, ' ') : option.label;
+              return <MenuItem value={value} key={value}>{label}</MenuItem>;
+            })}
           </Select>
         )}
       />

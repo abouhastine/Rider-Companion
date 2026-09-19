@@ -6,6 +6,7 @@ import com.rider.companion.entity.RideChecklistItemEntity;
 import com.rider.companion.entity.RideEntity;
 import com.rider.companion.entity.RiderEntity;
 import com.rider.companion.entity.UserEntity;
+import com.rider.companion.config.JwtService;
 import com.rider.companion.repository.MaintenanceRecordRepository;
 import com.rider.companion.repository.MotorcycleRepository;
 import com.rider.companion.repository.RideChecklistItemRepository;
@@ -38,6 +39,7 @@ class RidePatchAndDashboardControllerTest {
   @Autowired private MaintenanceRecordRepository maintenanceRecordRepository;
   @Autowired private RideRepository rideRepository;
   @Autowired private RideChecklistItemRepository checklistItemRepository;
+  @Autowired private JwtService jwtService;
 
   @BeforeEach
   void clearDatabase() {
@@ -93,19 +95,20 @@ class RidePatchAndDashboardControllerTest {
     checklistItem.setChecked(false);
     checklistItem = checklistItemRepository.save(checklistItem);
 
-    mockMvc.perform(patch("/api/rides/{id}/status", ride.getId())
+    String authorization = "Bearer " + jwtService.issue(user.getId(), user.getEmail()).token();
+    mockMvc.perform(patch("/api/me/rides/{id}/status", ride.getId()).header("Authorization", authorization)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"status\":\"PLANNED\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("PLANNED"));
 
-    mockMvc.perform(patch("/api/rides/{rideId}/checklist/{itemId}", ride.getId(), checklistItem.getId())
+    mockMvc.perform(patch("/api/me/rides/{rideId}/checklist/{itemId}", ride.getId(), checklistItem.getId()).header("Authorization", authorization)
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"checked\":true}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.checked").value(true));
 
-    mockMvc.perform(get("/api/dashboard").param("userId", user.getId().toString()))
+    mockMvc.perform(get("/api/me/dashboard").header("Authorization", authorization))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.user.firstName").value("Aymen"))
         .andExpect(jsonPath("$.user.experienceLevel").value("BEGINNER"))

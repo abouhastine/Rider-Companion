@@ -42,6 +42,11 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/me/**")
                     .authenticated()
+                    .requestMatchers(
+                        "/api/maintenance-records/**",
+                        "/api/rides/**",
+                        "/api/ride-checklist-items/**")
+                    .denyAll()
                     .anyRequest()
                     .permitAll())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

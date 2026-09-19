@@ -16,9 +16,15 @@ apiClient.interceptors.request.use((config) => {
 });
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string }>) =>
-    Promise.reject({
+  (error: AxiosError<{ message?: string }>) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      sessionStorage.removeItem('rider-companion.session');
+      sessionStorage.removeItem('rider-companion.token');
+      if (!window.location.pathname.startsWith('/sign-in')) window.location.assign('/sign-in?reason=session');
+    }
+    return Promise.reject({
       message: error.response?.data?.message ?? error.message ?? 'An unexpected error occurred',
       status: error.response?.status,
-    } satisfies ApiError),
+    } satisfies ApiError);
+  },
 );

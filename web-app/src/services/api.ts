@@ -1,48 +1,17 @@
 import { apiClient } from './apiClient';
-export type Session = {
-  token: string;
-  expiresAt: string;
-  user: { id: number; firstName: string; lastName: string; email: string };
-};
-export type MotorcycleApi = {
-  id: number;
-  brand: string;
-  model: string;
-  year: number;
-  engineCapacity: number;
-  power: number;
-  fuelType: string;
-  registrationNumber: string;
-  purchaseDate: string;
-  currentMileage: number;
-  averageConsumption: number | null;
-  primaryMotorcycle: boolean;
-  hasImage: boolean;
-};
-export const authApi = {
-  signUp: async (body: object) => (await apiClient.post<Session>('/api/sign-in', body)).data,
-  login: async (body: object) => (await apiClient.post<Session>('/api/login', body)).data,
-  logout: () => apiClient.post('/api/logout'),
-};
+
+export type Session = { token: string; expiresAt: string; user: { id: number; firstName: string; lastName: string; email: string } };
+export type MotorcycleApi = { id: number; brand: string; model: string; year: number; engineCapacity: number; power: number; fuelType: string; registrationNumber: string | null; purchaseDate: string | null; currentMileage: number; averageConsumption: number | null; primaryMotorcycle: boolean; hasImage: boolean };
+export type MotorcycleSummary = { id: number; brand: string; model: string };
+export type MaintenanceApi = { id: number; motorcycle: MotorcycleSummary; maintenanceType: string; status: 'COMPLETED' | 'PLANNED'; completionDate: string | null; plannedDate: string | null; mileage: number | null; plannedMileage: number | null; cost: number | null; serviceProvider: string | null; notes: string | null };
+export type ChecklistApi = { id: number; label: string; checked: boolean };
+export type RideApi = { id: number; motorcycle: MotorcycleSummary; title: string; plannedDate: string; departureTime: string; departureLocation: string; destination: string; estimatedDistance: number; estimatedDuration: number; rideType: string; useHighway: boolean; useTolls: boolean; plannedBreaks: number | null; status: 'DRAFT' | 'PLANNED' | 'COMPLETED' | 'CANCELLED'; notes: string | null; checklistItems: ChecklistApi[] };
+
+export const authApi = { signUp: async (body: object) => (await apiClient.post<Session>('/api/sign-in', body)).data, login: async (body: object) => (await apiClient.post<Session>('/api/login', body)).data, logout: () => apiClient.post('/api/logout') };
 export const meApi = {
-  profile: () => apiClient.get('/api/me/profile').then((r) => r.data),
-  updateProfile: (body: object) => apiClient.put('/api/me/profile', body).then((r) => r.data),
-  dashboard: () => apiClient.get('/api/me/dashboard').then((r) => r.data),
-  motorcycles: () => apiClient.get<MotorcycleApi[]>('/api/me/motorcycles').then((r) => r.data),
-  motorcycle: (id: string) =>
-    apiClient.get<MotorcycleApi>(`/api/me/motorcycles/${id}`).then((r) => r.data),
-  createMotorcycle: (body: object) =>
-    apiClient.post<MotorcycleApi>('/api/me/motorcycles', body).then((r) => r.data),
-  updateMotorcycle: (id: string, body: object) =>
-    apiClient.put<MotorcycleApi>(`/api/me/motorcycles/${id}`, body).then((r) => r.data),
-  deleteMotorcycle: (id: number) => apiClient.delete(`/api/me/motorcycles/${id}`),
-  uploadImage: (id: number, file: File) => {
-    const data = new FormData();
-    data.append('file', file);
-    return apiClient.put(`/api/me/motorcycles/${id}/image`, data);
-  },
-  image: (id: number) =>
-    apiClient
-      .get(`/api/me/motorcycles/${id}/image`, { responseType: 'blob' })
-      .then((r) => URL.createObjectURL(r.data)),
+  profile: () => apiClient.get('/api/me/profile').then((r) => r.data), updateProfile: (body: object) => apiClient.put('/api/me/profile', body).then((r) => r.data), dashboard: () => apiClient.get('/api/me/dashboard').then((r) => r.data),
+  motorcycles: () => apiClient.get<MotorcycleApi[]>('/api/me/motorcycles').then((r) => r.data), motorcycle: (id: string) => apiClient.get<MotorcycleApi>(`/api/me/motorcycles/${id}`).then((r) => r.data), createMotorcycle: (body: object) => apiClient.post<MotorcycleApi>('/api/me/motorcycles', body).then((r) => r.data), updateMotorcycle: (id: string, body: object) => apiClient.put<MotorcycleApi>(`/api/me/motorcycles/${id}`, body).then((r) => r.data), deleteMotorcycle: (id: number) => apiClient.delete(`/api/me/motorcycles/${id}`),
+  uploadImage: (id: number, file: File) => { const data = new FormData(); data.append('file', file); return apiClient.put(`/api/me/motorcycles/${id}/image`, data); }, image: (id: number) => apiClient.get(`/api/me/motorcycles/${id}/image`, { responseType: 'blob' }).then((r) => URL.createObjectURL(r.data)),
+  maintenance: () => apiClient.get<MaintenanceApi[]>('/api/me/maintenance-records').then((r) => r.data), maintenanceRecord: (id: string) => apiClient.get<MaintenanceApi>(`/api/me/maintenance-records/${id}`).then((r) => r.data), createMaintenance: (body: object) => apiClient.post<MaintenanceApi>('/api/me/maintenance-records', body).then((r) => r.data), updateMaintenance: (id: string, body: object) => apiClient.put<MaintenanceApi>(`/api/me/maintenance-records/${id}`, body).then((r) => r.data), deleteMaintenance: (id: number) => apiClient.delete(`/api/me/maintenance-records/${id}`),
+  rides: () => apiClient.get<RideApi[]>('/api/me/rides').then((r) => r.data), ride: (id: string) => apiClient.get<RideApi>(`/api/me/rides/${id}`).then((r) => r.data), createRide: (body: object) => apiClient.post<RideApi>('/api/me/rides', body).then((r) => r.data), updateRide: (id: string, body: object) => apiClient.put<RideApi>(`/api/me/rides/${id}`, body).then((r) => r.data), deleteRide: (id: number) => apiClient.delete(`/api/me/rides/${id}`), updateRideStatus: (id: number, status: RideApi['status']) => apiClient.patch<RideApi>(`/api/me/rides/${id}/status`, { status }).then((r) => r.data), updateChecklist: (rideId: number, itemId: number, checked: boolean) => apiClient.patch<ChecklistApi>(`/api/me/rides/${rideId}/checklist/${itemId}`, { checked }).then((r) => r.data),
 };

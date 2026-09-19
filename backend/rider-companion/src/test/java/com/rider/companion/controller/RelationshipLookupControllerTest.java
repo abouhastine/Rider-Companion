@@ -6,6 +6,7 @@ import com.rider.companion.entity.RideChecklistItemEntity;
 import com.rider.companion.entity.RideEntity;
 import com.rider.companion.entity.RiderEntity;
 import com.rider.companion.entity.UserEntity;
+import com.rider.companion.config.JwtService;
 import com.rider.companion.repository.MaintenanceRecordRepository;
 import com.rider.companion.repository.MotorcycleRepository;
 import com.rider.companion.repository.RideChecklistItemRepository;
@@ -34,6 +35,7 @@ class RelationshipLookupControllerTest {
   @Autowired private MaintenanceRecordRepository maintenanceRecordRepository;
   @Autowired private RideRepository rideRepository;
   @Autowired private RideChecklistItemRepository checklistItemRepository;
+  @Autowired private JwtService jwtService;
 
   @BeforeEach
   void clearDatabase() {
@@ -78,6 +80,7 @@ class RelationshipLookupControllerTest {
     RideChecklistItemEntity checklistItem = new RideChecklistItemEntity();
     checklistItem.setRide(ride);
     checklistItem.setLabel("Check tire pressure");
+    checklistItem.setChecked(false);
     checklistItemRepository.save(checklistItem);
 
     mockMvc.perform(get("/api/riders/user/{userId}", user.getId()))
@@ -88,14 +91,15 @@ class RelationshipLookupControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].brand").value("Yamaha"));
 
-    mockMvc.perform(get("/api/maintenance-records/motorcycle/{motorcycleId}", motorcycle.getId()))
+    String authorization = "Bearer " + jwtService.issue(user.getId(), user.getEmail()).token();
+    mockMvc.perform(get("/api/me/maintenance-records").header("Authorization", authorization))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].maintenanceType").value("Oil Change"));
 
-    mockMvc.perform(get("/api/rides/motorcycle/{motorcycleId}", motorcycle.getId()))
+    mockMvc.perform(get("/api/me/rides").header("Authorization", authorization))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].title").value("Weekend Trip"))
         .andExpect(jsonPath("$[0].checklistItems[0].label").value("Check tire pressure"))
-        .andExpect(jsonPath("$[0].checklistItems[0].ride").doesNotExist());
+        .andExpect(jsonPath("$[0].checklistItems[0].checked").value(false));
   }
 }

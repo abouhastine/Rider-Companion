@@ -27,7 +27,7 @@ export function DashboardPage() {
   return (
     <Box className="page-content">
       <PageHeader
-        eyebrow="Saturday, 16 August"
+        eyebrow={new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}
         title={`Good morning${data?.user?.firstName ? `, ${data.user.firstName}` : ''}.`}
         action={
           <AddButton component={RouterLink} to="/rides/new">
@@ -73,9 +73,6 @@ export function DashboardPage() {
                   position: 'relative',
                   bgcolor: 'primary.dark',
                   color: 'white',
-                  backgroundImage: bike.imageUrl
-                    ? `linear-gradient(90deg, rgba(15,34,23,.9), rgba(15,34,23,.1)), url(${bike.imageUrl})`
-                    : undefined,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}

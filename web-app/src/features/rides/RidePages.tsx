@@ -1,231 +1,30 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Grid2 as Grid,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Delete, Edit } from '@mui/icons-material';
+import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, Grid2 as Grid, Stack, Typography } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  AddButton,
-  FormSelect,
-  FormTextField,
-  FormToggle,
-  PageHeader,
-  SectionCard,
-  StatusChip,
-} from '../../components/ui';
-import { checklist, motorcycles, rides } from '../shared/mockData';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AddButton, EmptyState, FormSelect, FormTextField, FormToggle, PageHeader, SectionCard, StatusChip } from '../../components/ui';
+import { meApi, type RideApi } from '../../services/api';
 import { rideSchema, type RideValues } from '../shared/schemas';
+
 const rideTypes = ['LEISURE_RIDE', 'COMMUTE', 'ROAD_TRIP', 'BUSINESS_TRIP', 'GROUP_RIDE', 'OTHER'];
 export function RidesPage() {
-  return (
-    <Box className="page-content">
-      <PageHeader
-        eyebrow="Ride planner"
-        title="Your next adventures"
-        action={
-          <AddButton component={RouterLink} to="/rides/new">
-            Plan a ride
-          </AddButton>
-        }
-      />
-      <Grid container spacing={3}>
-        {rides.map((ride) => (
-          <Grid size={{ xs: 12, md: 6 }} key={ride.id}>
-            <SectionCard>
-              <Stack spacing={2}>
-                <Stack direction="row" justifyContent="space-between">
-                  <Box>
-                    <Typography variant="h5">{ride.title}</Typography>
-                    <Typography color="text.secondary">{ride.date}</Typography>
-                  </Box>
-                  <StatusChip status={ride.status} />
-                </Stack>
-                <Typography>
-                  {ride.destination} · {ride.distance} km · {ride.type}
-                </Typography>
-                <Button component={RouterLink} to="/rides/new" sx={{ alignSelf: 'flex-start' }}>
-                  View ride
-                </Button>
-              </Stack>
-            </SectionCard>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
+  const query = useQuery({ queryKey: ['rides'], queryFn: meApi.rides }); const client = useQueryClient(); const [id, setId] = useState<number | null>(null); const selected = query.data?.find((ride) => ride.id === id);
+  const remove = useMutation({ mutationFn: meApi.deleteRide, onSuccess: () => { client.invalidateQueries({ queryKey: ['rides'] }); client.invalidateQueries({ queryKey: ['dashboard'] }); setId(null); } });
+  return <Box className="page-content"><PageHeader eyebrow="Ride planner" title="Your next adventures" action={<AddButton component={RouterLink} to="/rides/new">Plan a ride</AddButton>} />
+    {query.isLoading ? <Typography>Loading rides…</Typography> : query.error ? <Typography color="error">Unable to load rides.</Typography> : !query.data?.length ? <EmptyState title="No rides planned" description="Plan your first adventure." action={<Button component={RouterLink} to="/rides/new" variant="contained">Plan a ride</Button>} /> : <Grid container spacing={3}>{query.data.map((ride) => <Grid key={ride.id} size={{ xs: 12, md: 6 }}><SectionCard><Stack spacing={1.5}><Stack direction="row" justifyContent="space-between"><Box><Typography variant="h5">{ride.title}</Typography><Typography color="text.secondary">{ride.plannedDate}</Typography></Box><StatusChip status={ride.status}/></Stack><Typography>{ride.destination} · {ride.estimatedDistance} km · {ride.rideType.replace(/_/g, ' ')}</Typography><Stack direction="row"><Button component={RouterLink} to={`/rides/${ride.id}/edit`} startIcon={<Edit />}>View / edit</Button><Button color="error" startIcon={<Delete />} onClick={() => setId(ride.id)}>Delete</Button></Stack></Stack></SectionCard></Grid>)}</Grid>}
+    <Dialog open={Boolean(selected)} onClose={() => !remove.isPending && setId(null)}><DialogTitle>Delete ride?</DialogTitle><DialogContent><DialogContentText>This permanently deletes {selected?.title}.</DialogContentText>{remove.error && <Typography color="error">{(remove.error as { message: string }).message}</Typography>}</DialogContent><DialogActions><Button disabled={remove.isPending} onClick={() => setId(null)}>Cancel</Button><Button color="error" variant="contained" disabled={remove.isPending} onClick={() => selected && remove.mutate(selected.id)}>Delete</Button></DialogActions></Dialog>
+  </Box>;
 }
+
 export function RideFormPage() {
-  const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<RideValues>({
-    resolver: zodResolver(rideSchema),
-    defaultValues: {
-      title: '',
-      motorcycle: `${motorcycles[0].brand} ${motorcycles[0].model}`,
-      date: '',
-      time: '09:00',
-      departure: '',
-      destination: '',
-      distance: 0,
-      duration: 0,
-      type: 'LEISURE_RIDE',
-      highway: false,
-      tolls: false,
-      breaks: '',
-      notes: '',
-    },
-  });
-  return (
-    <Box className="page-content">
-      <PageHeader eyebrow="Ride planner" title="Plan a ride" />
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <SectionCard>
-            <Stack component="form" onSubmit={handleSubmit(() => navigate('/rides'))} spacing={2.5}>
-              <Grid container spacing={2.5}>
-                <Grid size={12}>
-                  <FormTextField
-                    name="title"
-                    label="Ride title"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormSelect
-                    name="motorcycle"
-                    label="Motorcycle"
-                    values={motorcycles.map((item) => `${item.brand} ${item.model}`)}
-                    control={control}
-                    errors={errors}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormSelect
-                    name="type"
-                    label="Ride type"
-                    values={rideTypes}
-                    control={control}
-                    errors={errors}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormTextField
-                    name="date"
-                    label="Date"
-                    type="date"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormTextField
-                    name="time"
-                    label="Departure time"
-                    type="time"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormTextField
-                    name="departure"
-                    label="Departure location"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormTextField
-                    name="destination"
-                    label="Destination"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <FormTextField
-                    name="distance"
-                    label="Estimated distance (km)"
-                    type="number"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <FormTextField
-                    name="duration"
-                    label="Duration (minutes)"
-                    type="number"
-                    register={register}
-                    errors={errors}
-                    required
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <FormTextField
-                    name="breaks"
-                    label="Planned breaks"
-                    type="number"
-                    register={register}
-                    errors={errors}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormToggle name="highway" label="Allow highways" control={control} />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormToggle name="tolls" label="Allow toll roads" control={control} />
-                </Grid>
-                <Grid size={12}>
-                  <FormTextField
-                    name="notes"
-                    label="Notes"
-                    register={register}
-                    errors={errors}
-                    multiline
-                  />
-                </Grid>
-              </Grid>
-              <Stack direction="row" spacing={1.5}>
-                <Button type="submit" variant="contained">
-                  Save ride
-                </Button>
-                <Button onClick={() => navigate('/rides')}>Cancel</Button>
-              </Stack>
-            </Stack>
-          </SectionCard>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <SectionCard title="Before you go">
-            <Stack spacing={0.25}>
-              {checklist.map((item) => (
-                <FormControlLabel
-                  key={item.label}
-                  control={<Checkbox defaultChecked={item.done} />}
-                  label={item.label}
-                />
-              ))}
-            </Stack>
-          </SectionCard>
-        </Grid>
-      </Grid>
-    </Box>
-  );
+  const { rideId } = useParams(); const navigate = useNavigate(); const client = useQueryClient(); const bikes = useQuery({ queryKey: ['motorcycles'], queryFn: meApi.motorcycles }); const current = useQuery({ queryKey: ['rides', rideId], queryFn: () => meApi.ride(rideId!), enabled: Boolean(rideId) });
+  const form = useForm<RideValues>({ resolver: zodResolver(rideSchema), defaultValues: { title: '', motorcycle: '', date: '', time: '09:00', departure: '', destination: '', distance: 0, duration: 0, type: 'LEISURE_RIDE', highway: false, tolls: false, breaks: '', notes: '', status: 'PLANNED' } });
+  useEffect(() => { const r = current.data; if (r) form.reset({ title: r.title, motorcycle: String(r.motorcycle.id), date: r.plannedDate, time: r.departureTime, departure: r.departureLocation, destination: r.destination, distance: r.estimatedDistance, duration: r.estimatedDuration, type: r.rideType, highway: r.useHighway, tolls: r.useTolls, breaks: r.plannedBreaks ?? '', notes: r.notes ?? '', status: r.status }); }, [current.data, form]); useEffect(() => { if (!rideId && bikes.data?.[0]) form.setValue('motorcycle', String(bikes.data[0].id)); }, [bikes.data, form, rideId]);
+  const save = useMutation({ mutationFn: (v: RideValues) => { const body = { motorcycle: Number(v.motorcycle), title: v.title, plannedDate: v.date, departureTime: v.time, departureLocation: v.departure, destination: v.destination, estimatedDistance: v.distance, estimatedDuration: v.duration, rideType: v.type, useHighway: v.highway, useTolls: v.tolls, plannedBreaks: v.breaks === '' ? null : v.breaks, notes: v.notes, status: v.status }; return rideId ? meApi.updateRide(rideId, body) : meApi.createRide(body); }, onSuccess: () => { client.invalidateQueries({ queryKey: ['rides'] }); client.invalidateQueries({ queryKey: ['dashboard'] }); navigate('/rides'); } });
+  const updateChecklist = useMutation({ mutationFn: ({ itemId, checked }: { itemId: number; checked: boolean }) => meApi.updateChecklist(Number(rideId), itemId, checked), onSuccess: () => client.invalidateQueries({ queryKey: ['rides', rideId] }) }); const updateStatus = useMutation({ mutationFn: (value: RideApi['status']) => meApi.updateRideStatus(Number(rideId), value), onSuccess: () => { client.invalidateQueries({ queryKey: ['rides', rideId] }); client.invalidateQueries({ queryKey: ['rides'] }); client.invalidateQueries({ queryKey: ['dashboard'] }); } });
+  if (!bikes.isLoading && !bikes.data?.length) return <Box className="page-content"><EmptyState title="Add a motorcycle first" description="Rides belong to a motorcycle." action={<Button component={RouterLink} to="/garage/new" variant="contained">Add motorcycle</Button>}/></Box>;
+  return <Box className="page-content"><PageHeader eyebrow="Ride planner" title={rideId ? 'Edit ride' : 'Plan a ride'} /><Grid container spacing={3}><Grid size={{xs:12,lg:8}}><SectionCard><Stack component="form" spacing={2} onSubmit={form.handleSubmit((v) => save.mutate(v))}><FormTextField name="title" label="Ride title" register={form.register} errors={form.formState.errors} required/><FormSelect name="motorcycle" label="Motorcycle" values={(bikes.data ?? []).map((b) => ({value:String(b.id),label:`${b.brand} ${b.model}`}))} control={form.control} errors={form.formState.errors}/><FormSelect name="type" label="Ride type" values={rideTypes} control={form.control} errors={form.formState.errors}/><FormTextField name="date" label="Date" type="date" register={form.register} errors={form.formState.errors} required/><FormTextField name="time" label="Departure time" type="time" register={form.register} errors={form.formState.errors} required/><FormTextField name="departure" label="Departure location" register={form.register} errors={form.formState.errors} required/><FormTextField name="destination" label="Destination" register={form.register} errors={form.formState.errors} required/><FormTextField name="distance" label="Estimated distance" type="number" register={form.register} errors={form.formState.errors} required/><FormTextField name="duration" label="Duration (minutes)" type="number" register={form.register} errors={form.formState.errors} required/><FormToggle name="highway" label="Allow highways" control={form.control}/><FormToggle name="tolls" label="Allow toll roads" control={form.control}/><FormTextField name="notes" label="Notes" register={form.register} errors={form.formState.errors} multiline/><Stack direction="row"><Button type="submit" variant="contained" disabled={save.isPending}>Save ride</Button><Button onClick={() => navigate('/rides')}>Cancel</Button></Stack></Stack></SectionCard></Grid>{current.data && <Grid size={{xs:12,lg:4}}><SectionCard title="Ride status"><FormSelect name="status" label="Status" values={['DRAFT','PLANNED','COMPLETED','CANCELLED']} control={form.control} errors={{}}/><Button sx={{mt:1}} onClick={() => updateStatus.mutate(form.getValues('status') as RideApi['status'])}>Update status</Button></SectionCard><SectionCard title="Before you go" sx={{mt:3}}>{current.data.checklistItems.map((item) => <FormControlLabel key={item.id} control={<Checkbox checked={item.checked} onChange={(e) => updateChecklist.mutate({itemId:item.id,checked:e.target.checked})}/>} label={item.label}/>)}</SectionCard></Grid>}</Grid></Box>;
 }

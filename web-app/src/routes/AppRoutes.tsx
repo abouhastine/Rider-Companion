@@ -52,8 +52,10 @@ export function AppRoutes() {
         <Route path="/garage/:motorcycleId/edit" element={<MotorcycleFormPage />} />
         <Route path="/maintenance" element={<MaintenancePage />} />
         <Route path="/maintenance/new" element={<MaintenanceFormPage />} />
+        <Route path="/maintenance/:maintenanceId/edit" element={<MaintenanceFormPage />} />
         <Route path="/rides" element={<RidesPage />} />
         <Route path="/rides/new" element={<RideFormPage />} />
+        <Route path="/rides/:rideId/edit" element={<RideFormPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/sign-out" element={<SignOutPage />} />
       </Route>

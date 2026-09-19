@@ -6,6 +6,12 @@ import com.rider.companion.dto.MotorcycleResponse;
 import com.rider.companion.dto.PrimaryMotorcycleUpdateRequest;
 import com.rider.companion.dto.ProfileResponse;
 import com.rider.companion.dto.ProfileUpdateRequest;
+import com.rider.companion.dto.MaintenanceRecordRequest;
+import com.rider.companion.dto.MaintenanceRecordResponse;
+import com.rider.companion.dto.RideRequest;
+import com.rider.companion.dto.RideResponse;
+import com.rider.companion.dto.RideStatusUpdateRequest;
+import com.rider.companion.dto.ChecklistItemCheckedUpdateRequest;
 import com.rider.companion.entity.MotorcycleImageEntity;
 import com.rider.companion.service.CurrentUserService;
 import com.rider.companion.service.DashboardService;
@@ -134,6 +140,32 @@ public class CurrentUserController {
     service.deleteImage(userId, id);
     return ResponseEntity.noContent().build();
   }
+
+  @GetMapping("/maintenance-records")
+  public List<MaintenanceRecordResponse> maintenanceRecords(@AuthenticationPrincipal Long userId) { return service.maintenanceRecords(userId); }
+  @GetMapping("/maintenance-records/{id}")
+  public MaintenanceRecordResponse maintenanceRecord(@AuthenticationPrincipal Long userId, @PathVariable Long id) { return service.maintenanceRecord(userId, id); }
+  @PostMapping("/maintenance-records")
+  public ResponseEntity<MaintenanceRecordResponse> createMaintenanceRecord(@AuthenticationPrincipal Long userId, @Valid @RequestBody MaintenanceRecordRequest request) { return ResponseEntity.status(HttpStatus.CREATED).body(service.createMaintenanceRecord(userId, request)); }
+  @PutMapping("/maintenance-records/{id}")
+  public MaintenanceRecordResponse updateMaintenanceRecord(@AuthenticationPrincipal Long userId, @PathVariable Long id, @Valid @RequestBody MaintenanceRecordRequest request) { return service.updateMaintenanceRecord(userId, id, request); }
+  @DeleteMapping("/maintenance-records/{id}")
+  public ResponseEntity<Void> deleteMaintenanceRecord(@AuthenticationPrincipal Long userId, @PathVariable Long id) { service.deleteMaintenanceRecord(userId, id); return ResponseEntity.noContent().build(); }
+
+  @GetMapping("/rides")
+  public List<RideResponse> rides(@AuthenticationPrincipal Long userId) { return service.rides(userId); }
+  @GetMapping("/rides/{id}")
+  public RideResponse ride(@AuthenticationPrincipal Long userId, @PathVariable Long id) { return service.ride(userId, id); }
+  @PostMapping("/rides")
+  public ResponseEntity<RideResponse> createRide(@AuthenticationPrincipal Long userId, @Valid @RequestBody RideRequest request) { return ResponseEntity.status(HttpStatus.CREATED).body(service.createRide(userId, request)); }
+  @PutMapping("/rides/{id}")
+  public RideResponse updateRide(@AuthenticationPrincipal Long userId, @PathVariable Long id, @Valid @RequestBody RideRequest request) { return service.updateRide(userId, id, request); }
+  @PatchMapping("/rides/{id}/status")
+  public RideResponse updateRideStatus(@AuthenticationPrincipal Long userId, @PathVariable Long id, @Valid @RequestBody RideStatusUpdateRequest request) { return service.updateRideStatus(userId, id, request.status()); }
+  @PatchMapping("/rides/{rideId}/checklist/{itemId}")
+  public RideResponse.ChecklistItem updateChecklist(@AuthenticationPrincipal Long userId, @PathVariable Long rideId, @PathVariable Long itemId, @Valid @RequestBody ChecklistItemCheckedUpdateRequest request) { return service.updateChecklistItem(userId, rideId, itemId, request.checked()); }
+  @DeleteMapping("/rides/{id}")
+  public ResponseEntity<Void> deleteRide(@AuthenticationPrincipal Long userId, @PathVariable Long id) { service.deleteRide(userId, id); return ResponseEntity.noContent().build(); }
 
   private void validateImage(MultipartFile file) {
     if (file.isEmpty()

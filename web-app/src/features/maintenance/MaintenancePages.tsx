@@ -1,218 +1,31 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, Grid2 as Grid, Stack, Typography } from '@mui/material';
+import { Delete, Edit } from '@mui/icons-material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid2 as Grid, Stack, Typography } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  AddButton,
-  FormSelect,
-  FormTextField,
-  PageHeader,
-  SectionCard,
-  StatusChip,
-} from '../../components/ui';
-import { maintenanceRecords, motorcycles } from '../shared/mockData';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AddButton, EmptyState, FormSelect, FormTextField, PageHeader, SectionCard, StatusChip } from '../../components/ui';
+import { meApi } from '../../services/api';
 import { maintenanceSchema, type MaintenanceValues } from '../shared/schemas';
-const types = [
-  'OIL_CHANGE',
-  'OIL_FILTER',
-  'AIR_FILTER',
-  'CHAIN_KIT',
-  'CHAIN_LUBRICATION',
-  'CHAIN_TENSION',
-  'TIRES',
-  'BRAKE_PADS',
-  'BRAKE_FLUID',
-  'COOLANT',
-  'SPARK_PLUGS',
-  'BATTERY',
-  'GENERAL_SERVICE',
-  'OTHER',
-];
+
+const types = ['OIL_CHANGE', 'OIL_FILTER', 'AIR_FILTER', 'CHAIN_KIT', 'CHAIN_LUBRICATION', 'CHAIN_TENSION', 'TIRES', 'BRAKE_PADS', 'BRAKE_FLUID', 'COOLANT', 'SPARK_PLUGS', 'BATTERY', 'GENERAL_SERVICE', 'OTHER'];
+const status = (item: { status: string; plannedDate: string | null }) => item.status === 'PLANNED' && item.plannedDate && new Date(item.plannedDate) < new Date(new Date().toDateString()) ? 'OVERDUE' : item.status;
+
 export function MaintenancePage() {
-  return (
-    <Box className="page-content">
-      <PageHeader
-        eyebrow="Maintenance logbook"
-        title="Keep it running smoothly"
-        action={
-          <AddButton component={RouterLink} to="/maintenance/new">
-            Add maintenance
-          </AddButton>
-        }
-      />
-      <SectionCard>
-        <Stack spacing={0.5}>
-          {maintenanceRecords.map((record) => (
-            <Grid
-              container
-              alignItems="center"
-              spacing={2}
-              key={record.id}
-              sx={{ py: 2, borderBottom: '1px solid #edf0ec' }}
-            >
-              <Grid size={{ xs: 8, md: 3 }}>
-                <Typography fontWeight={750}>{record.type}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {record.motorcycle}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 4, md: 2 }}>
-                <StatusChip status={record.status} />
-              </Grid>
-              <Grid size={{ xs: 6, md: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Date
-                </Typography>
-                <Typography>{record.date}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6, md: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Mileage
-                </Typography>
-                <Typography>{record.mileage.toLocaleString()} km</Typography>
-              </Grid>
-              <Grid size={{ xs: 6, md: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Cost
-                </Typography>
-                <Typography>€{record.cost}</Typography>
-              </Grid>
-              <Grid size={{ xs: 6, md: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Provider
-                </Typography>
-                <Typography noWrap>{record.provider}</Typography>
-              </Grid>
-            </Grid>
-          ))}
-        </Stack>
-      </SectionCard>
-    </Box>
-  );
+  const query = useQuery({ queryKey: ['maintenance'], queryFn: meApi.maintenance }); const client = useQueryClient(); const [id, setId] = useState<number | null>(null);
+  const remove = useMutation({ mutationFn: meApi.deleteMaintenance, onSuccess: () => { client.invalidateQueries({ queryKey: ['maintenance'] }); client.invalidateQueries({ queryKey: ['dashboard'] }); setId(null); } }); const selected = query.data?.find((item) => item.id === id);
+  return <Box className="page-content"><PageHeader eyebrow="Maintenance logbook" title="Keep it running smoothly" action={<AddButton component={RouterLink} to="/maintenance/new">Add maintenance</AddButton>} />
+    {query.isLoading ? <Typography>Loading maintenance records…</Typography> : query.error ? <Typography color="error">Unable to load maintenance records.</Typography> : !query.data?.length ? <EmptyState title="No maintenance records" description="Add maintenance for a motorcycle." action={<Button component={RouterLink} to="/maintenance/new" variant="contained">Add maintenance</Button>} /> : <SectionCard><Stack>{query.data.map((item) => <Grid key={item.id} container spacing={2} alignItems="center" sx={{ py: 2, borderBottom: '1px solid #edf0ec' }}><Grid size={{ xs: 7, md: 3 }}><Typography fontWeight={750}>{item.maintenanceType.replace(/_/g, ' ')}</Typography><Typography color="text.secondary">{item.motorcycle.brand} {item.motorcycle.model}</Typography></Grid><Grid size={{ xs: 5, md: 2 }}><StatusChip status={status(item)} /></Grid><Grid size={{ xs: 6, md: 2 }}>{item.completionDate ?? item.plannedDate ?? '—'}</Grid><Grid size={{ xs: 6, md: 2 }}>{(item.mileage ?? item.plannedMileage)?.toLocaleString() ?? '—'} km</Grid><Grid size={{ xs: 6, md: 1 }}>€{item.cost ?? 0}</Grid><Grid size={{ xs: 6, md: 2 }}><Button component={RouterLink} to={`/maintenance/${item.id}/edit`} startIcon={<Edit />}>Edit</Button><Button color="error" startIcon={<Delete />} onClick={() => setId(item.id)}>Delete</Button></Grid></Grid>)}</Stack></SectionCard>}
+    <Dialog open={Boolean(selected)} onClose={() => !remove.isPending && setId(null)}><DialogTitle>Delete maintenance record?</DialogTitle><DialogContent><DialogContentText>This permanently deletes {selected?.maintenanceType.replace(/_/g, ' ')}.</DialogContentText>{remove.error && <Typography color="error">{(remove.error as { message: string }).message}</Typography>}</DialogContent><DialogActions><Button disabled={remove.isPending} onClick={() => setId(null)}>Cancel</Button><Button color="error" variant="contained" disabled={remove.isPending} onClick={() => selected && remove.mutate(selected.id)}>Delete</Button></DialogActions></Dialog>
+  </Box>;
 }
+
 export function MaintenanceFormPage() {
-  const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<MaintenanceValues>({
-    resolver: zodResolver(maintenanceSchema),
-    defaultValues: {
-      motorcycle: motorcycles[0].brand + ' ' + motorcycles[0].model,
-      type: 'OIL_CHANGE',
-      date: '',
-      mileage: motorcycles[0].mileage,
-      cost: 0,
-      provider: '',
-      notes: '',
-      nextDueDate: '',
-      nextDueMileage: '',
-    },
-  });
-  return (
-    <Box className="page-content">
-      <PageHeader eyebrow="Maintenance logbook" title="Add maintenance record" />
-      <SectionCard>
-        <Stack
-          component="form"
-          onSubmit={handleSubmit(() => navigate('/maintenance'))}
-          spacing={2.5}
-        >
-          <Grid container spacing={2.5}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormSelect
-                name="motorcycle"
-                label="Motorcycle"
-                values={motorcycles.map((item) => `${item.brand} ${item.model}`)}
-                control={control}
-                errors={errors}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormSelect
-                name="type"
-                label="Maintenance type"
-                values={types}
-                control={control}
-                errors={errors}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormTextField
-                name="date"
-                label="Completion date"
-                type="date"
-                register={register}
-                errors={errors}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormTextField
-                name="mileage"
-                label="Mileage (km)"
-                type="number"
-                register={register}
-                errors={errors}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormTextField
-                name="cost"
-                label="Cost (€)"
-                type="number"
-                register={register}
-                errors={errors}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormTextField
-                name="provider"
-                label="Service provider"
-                register={register}
-                errors={errors}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormTextField
-                name="nextDueDate"
-                label="Next due date"
-                type="date"
-                register={register}
-                errors={errors}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormTextField
-                name="nextDueMileage"
-                label="Next due mileage"
-                type="number"
-                register={register}
-                errors={errors}
-              />
-            </Grid>
-            <Grid size={12}>
-              <FormTextField
-                name="notes"
-                label="Notes"
-                register={register}
-                errors={errors}
-                multiline
-              />
-            </Grid>
-          </Grid>
-          <Stack direction="row" spacing={1.5}>
-            <Button type="submit" variant="contained">
-              Save maintenance
-            </Button>
-            <Button onClick={() => navigate('/maintenance')}>Cancel</Button>
-          </Stack>
-        </Stack>
-      </SectionCard>
-    </Box>
-  );
+  const { maintenanceId } = useParams(); const navigate = useNavigate(); const client = useQueryClient(); const bikes = useQuery({ queryKey: ['motorcycles'], queryFn: meApi.motorcycles }); const current = useQuery({ queryKey: ['maintenance', maintenanceId], queryFn: () => meApi.maintenanceRecord(maintenanceId!), enabled: Boolean(maintenanceId) });
+  const form = useForm<MaintenanceValues>({ resolver: zodResolver(maintenanceSchema), defaultValues: { motorcycle: '', type: 'OIL_CHANGE', date: '', mileage: 0, cost: 0, provider: '', notes: '', nextDueDate: '', nextDueMileage: '' } });
+  useEffect(() => { if (current.data) form.reset({ motorcycle: String(current.data.motorcycle.id), type: current.data.maintenanceType, date: current.data.completionDate ?? current.data.plannedDate ?? '', mileage: current.data.mileage ?? current.data.plannedMileage ?? 0, cost: current.data.cost ?? 0, provider: current.data.serviceProvider ?? '', notes: current.data.notes ?? '', nextDueDate: current.data.plannedDate ?? '', nextDueMileage: current.data.plannedMileage ?? '' }); }, [current.data, form]); useEffect(() => { if (!maintenanceId && bikes.data?.[0]) form.setValue('motorcycle', String(bikes.data[0].id)); }, [bikes.data, form, maintenanceId]);
+  const save = useMutation({ mutationFn: (v: MaintenanceValues) => { const body = { motorcycle: Number(v.motorcycle), maintenanceType: v.type, status: 'COMPLETED', completionDate: v.date, mileage: v.mileage, cost: v.cost, serviceProvider: v.provider, notes: v.notes, plannedDate: v.nextDueDate || null, plannedMileage: v.nextDueMileage === '' ? null : v.nextDueMileage }; return maintenanceId ? meApi.updateMaintenance(maintenanceId, body) : meApi.createMaintenance(body); }, onSuccess: () => { client.invalidateQueries({ queryKey: ['maintenance'] }); client.invalidateQueries({ queryKey: ['dashboard'] }); navigate('/maintenance'); } });
+  if (!bikes.isLoading && !bikes.data?.length) return <Box className="page-content"><EmptyState title="Add a motorcycle first" description="Maintenance belongs to a motorcycle." action={<Button component={RouterLink} to="/garage/new" variant="contained">Add motorcycle</Button>} /></Box>;
+  return <Box className="page-content"><PageHeader eyebrow="Maintenance logbook" title={maintenanceId ? 'Edit maintenance record' : 'Add maintenance record'} /><SectionCard><Stack component="form" spacing={2} onSubmit={form.handleSubmit((v) => save.mutate(v))}><FormSelect name="motorcycle" label="Motorcycle" values={(bikes.data ?? []).map((bike) => ({ value: String(bike.id), label: `${bike.brand} ${bike.model}` }))} control={form.control} errors={form.formState.errors}/><FormSelect name="type" label="Maintenance type" values={types} control={form.control} errors={form.formState.errors}/><Grid container spacing={2}><Grid size={4}><FormTextField name="date" label="Completion date" type="date" register={form.register} errors={form.formState.errors} required/></Grid><Grid size={4}><FormTextField name="mileage" label="Mileage" type="number" register={form.register} errors={form.formState.errors} required/></Grid><Grid size={4}><FormTextField name="cost" label="Cost (€)" type="number" register={form.register} errors={form.formState.errors} required/></Grid></Grid><FormTextField name="provider" label="Service provider" register={form.register} errors={form.formState.errors}/><FormTextField name="nextDueDate" label="Next due date" type="date" register={form.register} errors={form.formState.errors}/><FormTextField name="nextDueMileage" label="Next due mileage" type="number" register={form.register} errors={form.formState.errors}/><FormTextField name="notes" label="Notes" register={form.register} errors={form.formState.errors} multiline/><Stack direction="row"><Button type="submit" variant="contained" disabled={save.isPending}>Save maintenance</Button><Button onClick={() => navigate('/maintenance')}>Cancel</Button></Stack>{save.error && <Typography color="error">{(save.error as { message: string }).message}</Typography>}</Stack></SectionCard></Box>;
 }

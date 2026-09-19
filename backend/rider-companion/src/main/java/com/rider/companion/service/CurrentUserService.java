@@ -4,6 +4,13 @@ import com.rider.companion.dto.MotorcycleRequest;
 import com.rider.companion.dto.MotorcycleResponse;
 import com.rider.companion.dto.ProfileResponse;
 import com.rider.companion.dto.ProfileUpdateRequest;
+import com.rider.companion.dto.MaintenanceRecordRequest;
+import com.rider.companion.dto.MaintenanceRecordResponse;
+import com.rider.companion.dto.RideRequest;
+import com.rider.companion.dto.RideResponse;
+import com.rider.companion.entity.MaintenanceRecordEntity;
+import com.rider.companion.entity.RideChecklistItemEntity;
+import com.rider.companion.entity.RideEntity;
 import com.rider.companion.entity.MotorcycleImageEntity;
 import com.rider.companion.entity.MotocycleEntity;
 import com.rider.companion.entity.RiderEntity;
@@ -14,6 +21,9 @@ import com.rider.companion.repository.MotorcycleImageRepository;
 import com.rider.companion.repository.MotorcycleRepository;
 import com.rider.companion.repository.RiderRepository;
 import com.rider.companion.repository.UserRepository;
+import com.rider.companion.repository.MaintenanceRecordRepository;
+import com.rider.companion.repository.RideChecklistItemRepository;
+import com.rider.companion.repository.RideRepository;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -29,18 +39,27 @@ public class CurrentUserService {
   private final MotorcycleRepository motorcycles;
   private final MotorcycleImageRepository images;
   private final MotorcycleService motorcycleService;
+  private final MaintenanceRecordRepository maintenanceRecords;
+  private final RideRepository rides;
+  private final RideChecklistItemRepository checklistItems;
 
   public CurrentUserService(
       UserRepository users,
       RiderRepository riders,
       MotorcycleRepository motorcycles,
       MotorcycleImageRepository images,
-      MotorcycleService motorcycleService) {
+      MotorcycleService motorcycleService,
+      MaintenanceRecordRepository maintenanceRecords,
+      RideRepository rides,
+      RideChecklistItemRepository checklistItems) {
     this.users = users;
     this.riders = riders;
     this.motorcycles = motorcycles;
     this.images = images;
     this.motorcycleService = motorcycleService;
+    this.maintenanceRecords = maintenanceRecords;
+    this.rides = rides;
+    this.checklistItems = checklistItems;
   }
 
   public ProfileResponse profile(Long userId) {
@@ -139,6 +158,141 @@ public class CurrentUserService {
   public void deleteImage(Long userId, Long id) {
     owned(userId, id);
     images.deleteByMotorcycleId(id);
+  }
+
+  public List<MaintenanceRecordResponse> maintenanceRecords(Long userId) {
+    return maintenanceRecords.findByMotorcycleUserId(userId).stream().map(this::maintenanceResponse).toList();
+  }
+
+  public MaintenanceRecordResponse maintenanceRecord(Long userId, Long id) {
+    return maintenanceResponse(ownedMaintenance(userId, id));
+  }
+
+  @Transactional
+  public MaintenanceRecordResponse createMaintenanceRecord(Long userId, MaintenanceRecordRequest request) {
+    MaintenanceRecordEntity record = new MaintenanceRecordEntity();
+    applyMaintenance(record, userId, request, false);
+    record.setCreatedAt(java.time.LocalDate.now());
+    MaintenanceRecordEntity saved = maintenanceRecords.save(record);
+    if ("COMPLETED".equals(request.status()) && (request.plannedDate() != null || request.plannedMileage() != null)) {
+      MaintenanceRecordEntity followUp = new MaintenanceRecordEntity();
+      followUp.setMotorcycle(saved.getMotorcycle());
+      followUp.setMaintenanceType(request.maintenanceType());
+      followUp.setStatus("PLANNED");
+      followUp.setPlannedDate(request.plannedDate());
+      followUp.setPlannedMileage(request.plannedMileage());
+      followUp.setServiceProvider(request.serviceProvider());
+      followUp.setNotes(request.notes());
+      followUp.setCreatedAt(java.time.LocalDate.now());
+      maintenanceRecords.save(followUp);
+    }
+    return maintenanceResponse(saved);
+  }
+
+  @Transactional
+  public MaintenanceRecordResponse updateMaintenanceRecord(Long userId, Long id, MaintenanceRecordRequest request) {
+    MaintenanceRecordEntity record = ownedMaintenance(userId, id);
+    applyMaintenance(record, userId, request, true);
+    record.setUpdatedAt(java.time.LocalDate.now());
+    return maintenanceResponse(maintenanceRecords.save(record));
+  }
+
+  public void deleteMaintenanceRecord(Long userId, Long id) {
+    maintenanceRecords.delete(ownedMaintenance(userId, id));
+  }
+
+  public List<RideResponse> rides(Long userId) {
+    return rides.findByMotorcycleUserId(userId).stream().map(this::rideResponse).toList();
+  }
+
+  public RideResponse ride(Long userId, Long id) { return rideResponse(ownedRide(userId, id)); }
+
+  @Transactional
+  public RideResponse createRide(Long userId, RideRequest request) {
+    RideEntity ride = new RideEntity();
+    applyRide(ride, userId, request);
+    ride.setCreatedAt(java.time.LocalDate.now());
+    RideEntity saved = rides.save(ride);
+    List<String> labels = List.of("Check tire pressure", "Check fuel level", "Check the chain", "Check lights", "Check the weather", "Take vehicle documents", "Take the phone", "Bring water", "Check riding gear");
+    for (String label : labels) {
+      RideChecklistItemEntity item = new RideChecklistItemEntity();
+      item.setRide(saved); item.setLabel(label); item.setChecked(false); checklistItems.save(item);
+    }
+    return rideResponse(saved);
+  }
+
+  @Transactional
+  public RideResponse updateRide(Long userId, Long id, RideRequest request) {
+    RideEntity ride = ownedRide(userId, id);
+    applyRide(ride, userId, request);
+    ride.setUpdatedAt(java.time.LocalDate.now());
+    return rideResponse(rides.save(ride));
+  }
+
+  public RideResponse updateRideStatus(Long userId, Long id, String status) {
+    RideEntity ride = ownedRide(userId, id);
+    ride.setStatus(status); ride.setUpdatedAt(java.time.LocalDate.now());
+    return rideResponse(rides.save(ride));
+  }
+
+  public RideResponse.ChecklistItem updateChecklistItem(Long userId, Long rideId, Long itemId, boolean checked) {
+    RideEntity ride = ownedRide(userId, rideId);
+    RideChecklistItemEntity item = checklistItems.findById(itemId)
+        .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Checklist item not found"));
+    if (!item.getRide().getId().equals(ride.getId())) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Checklist item not found");
+    item.setChecked(checked); checklistItems.save(item);
+    return new RideResponse.ChecklistItem(item.getId(), item.getLabel(), item.getChecked());
+  }
+
+  @Transactional
+  public void deleteRide(Long userId, Long id) {
+    RideEntity ride = ownedRide(userId, id);
+    checklistItems.deleteByRideId(ride.getId());
+    rides.delete(ride);
+  }
+
+  private MaintenanceRecordEntity ownedMaintenance(Long userId, Long id) {
+    MaintenanceRecordEntity record = maintenanceRecords.findById(id)
+        .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Maintenance record not found"));
+    if (!record.getMotorcycle().getUser().getId().equals(userId)) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Maintenance record not found");
+    return record;
+  }
+
+  private RideEntity ownedRide(Long userId, Long id) {
+    RideEntity ride = rides.findById(id)
+        .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found"));
+    if (!ride.getMotorcycle().getUser().getId().equals(userId)) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found");
+    return ride;
+  }
+
+  private void applyMaintenance(MaintenanceRecordEntity record, Long userId, MaintenanceRecordRequest request, boolean update) {
+    record.setMotorcycle(owned(userId, request.motorcycle()));
+    record.setMaintenanceType(request.maintenanceType()); record.setStatus(request.status());
+    record.setCompletionDate(request.completionDate()); record.setPlannedDate(update ? request.plannedDate() : null);
+    record.setMileage(request.mileage()); record.setPlannedMileage(update ? request.plannedMileage() : null);
+    record.setCost(request.cost()); record.setServiceProvider(request.serviceProvider()); record.setNotes(request.notes());
+  }
+
+  private void applyRide(RideEntity ride, Long userId, RideRequest request) {
+    ride.setMotorcycle(owned(userId, request.motorcycle())); ride.setTitle(request.title());
+    ride.setPlannedDate(request.plannedDate()); ride.setDepartureTime(request.departureTime());
+    ride.setDepartureLocation(request.departureLocation()); ride.setDestination(request.destination());
+    ride.setEstimatedDistance(request.estimatedDistance()); ride.setActualDistance(request.actualDistance());
+    ride.setEstimatedDuration(request.estimatedDuration()); ride.setActualDuration(request.actualDuration());
+    ride.setRideType(request.rideType()); ride.setUseHighway(request.useHighway()); ride.setUseTolls(request.useTolls());
+    ride.setPlannedBreaks(request.plannedBreaks()); ride.setFuelCost(request.fuelCost()); ride.setStatus(request.status());
+    ride.setRating(request.rating()); ride.setNotes(request.notes());
+  }
+
+  private MaintenanceRecordResponse maintenanceResponse(MaintenanceRecordEntity record) {
+    MotocycleEntity bike = record.getMotorcycle();
+    return new MaintenanceRecordResponse(record.getId(), new MaintenanceRecordResponse.MotorcycleSummary(bike.getId(), bike.getBrand(), bike.getModel()), record.getMaintenanceType(), record.getStatus(), record.getCompletionDate(), record.getPlannedDate(), record.getMileage(), record.getPlannedMileage(), record.getCost(), record.getServiceProvider(), record.getNotes());
+  }
+
+  private RideResponse rideResponse(RideEntity ride) {
+    MotocycleEntity bike = ride.getMotorcycle();
+    List<RideResponse.ChecklistItem> items = checklistItems.findAll().stream().filter(item -> item.getRide().getId().equals(ride.getId())).map(item -> new RideResponse.ChecklistItem(item.getId(), item.getLabel(), item.getChecked())).toList();
+    return new RideResponse(ride.getId(), new RideResponse.MotorcycleSummary(bike.getId(), bike.getBrand(), bike.getModel()), ride.getTitle(), ride.getPlannedDate(), ride.getDepartureTime(), ride.getDepartureLocation(), ride.getDestination(), ride.getEstimatedDistance(), ride.getActualDistance(), ride.getEstimatedDuration(), ride.getActualDuration(), ride.getRideType(), ride.getUseHighway(), ride.getUseTolls(), ride.getPlannedBreaks(), ride.getFuelCost(), ride.getStatus(), ride.getRating(), ride.getNotes(), items);
   }
 
   private MotocycleEntity owned(Long userId, Long id) {

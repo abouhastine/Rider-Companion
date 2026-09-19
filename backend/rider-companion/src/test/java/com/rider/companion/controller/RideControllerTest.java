@@ -1,6 +1,7 @@
 package com.rider.companion.controller;
 
 import com.rider.companion.entity.UserEntity;
+import com.rider.companion.config.JwtService;
 import com.rider.companion.repository.MotorcycleRepository;
 import com.rider.companion.repository.RideRepository;
 import com.rider.companion.repository.RideChecklistItemRepository;
@@ -41,6 +42,8 @@ class RideControllerTest {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired private JwtService jwtService;
+
   @BeforeEach
   void clearDatabase() {
     checklistItemRepository.deleteAll();
@@ -75,16 +78,17 @@ class RideControllerTest {
         {"motorcycle":%d,"title":"Weekend Trip","plannedDate":"2026-08-01"}
         """.formatted(motorcycleId);
 
-    mockMvc.perform(post("/api/rides")
+    String authorization = "Bearer " + jwtService.issue(user.getId(), user.getEmail()).token();
+    mockMvc.perform(post("/api/me/rides").header("Authorization", authorization)
             .contentType(MediaType.APPLICATION_JSON)
             .content(ride))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.title").value("Weekend Trip"))
-        .andExpect(jsonPath("$.motorcycle.rides").doesNotExist());
+        .andExpect(jsonPath("$.motorcycle.model").value("MT-07"));
 
-    mockMvc.perform(get("/api/rides"))
+    mockMvc.perform(get("/api/me/rides").header("Authorization", authorization))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].title").value("Weekend Trip"))
-        .andExpect(jsonPath("$[0].motorcycle.rides").doesNotExist());
+        .andExpect(jsonPath("$[0].motorcycle.model").value("MT-07"));
   }
 }

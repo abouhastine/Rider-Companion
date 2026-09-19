@@ -68,6 +68,7 @@ export const rideSchema = z.object({
   tolls: z.boolean(),
   breaks: z.union([z.literal(''), number('Planned breaks')]),
   notes: z.string(),
+  status: z.enum(['DRAFT', 'PLANNED', 'COMPLETED', 'CANCELLED']).default('PLANNED'),
 });
 export type SignInValues = z.infer<typeof signInSchema>;
 export type SignUpValues = z.infer<typeof signUpSchema>;

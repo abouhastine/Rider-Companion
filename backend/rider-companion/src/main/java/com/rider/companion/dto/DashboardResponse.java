@@ -13,7 +13,7 @@ public record DashboardResponse(
   public record UserSummary(String firstName, String experienceLevel) {}
 
   public record PrimaryMotorcycle(
-      Long id, String brand, String model, Integer year, Integer currentMileage, String imageUrl) {}
+      Long id, String brand, String model, Integer year, Integer currentMileage, boolean hasImage) {}
 
   public record MaintenanceSummary(
       LastMaintenance lastMaintenance, long upcomingCount, long overdueCount) {}
