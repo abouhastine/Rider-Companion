@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-auth-email-constraint
+      author: rider-companion
+      changes:
+        - addNotNullConstraint:
+            tableName: users
+            columnName: email
+            columnDataType: VARCHAR(255)
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uk_users_email
+
+  - changeSet:
+      id: 002-create-revoked-tokens
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: revoked_tokens
+            columns:
+              - column:
+                  name: jti
+                  type: VARCHAR(64)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_revoked_tokens
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP
+                  constraints: { nullable: false }
+
+  - changeSet:
+      id: 002-create-motorcycle-images
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: motorcycle_images
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_motorcycle_images
+                    nullable: false
+              - column:
+                  name: motorcycle_id
+                  type: BIGINT
+                  constraints: { nullable: false, unique: true }
+              - column: { name: content, type: BLOB, constraints: { nullable: false } }
+              - column: { name: content_type, type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: byte_size, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: motorcycle_images
+            baseColumnNames: motorcycle_id
+            constraintName: fk_motorcycle_images_motorcycle
+            referencedTableName: motorcycles
+            referencedColumnNames: id
+            onDelete: CASCADE

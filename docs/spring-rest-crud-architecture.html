@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring REST CRUD Architecture</title>
+  <style>
+    :root { --ink:#162033; --muted:#64748b; --paper:#f7f8fc; --line:#dce3ee; --blue:#2563eb; --cyan:#0e7490; --green:#15803d; --violet:#6d28d9; --amber:#b45309; }
+    * { box-sizing:border-box; } body { margin:0; font:16px/1.55 Inter,ui-sans-serif,system-ui,sans-serif; color:var(--ink); background:var(--paper); }
+    header { color:#fff; padding:64px max(24px,calc((100% - 1100px)/2)); background:linear-gradient(125deg,#102a43,#1d4ed8 58%,#0891b2); }
+    h1 { margin:0; font-size:clamp(2rem,5vw,3.6rem); line-height:1.05; } header p { max-width:700px; margin:16px 0 0; color:#dbeafe; font-size:1.1rem; }
+    main { max-width:1100px; margin:auto; padding:44px 24px 72px; } section { margin:0 0 52px; } h2 { font-size:1.6rem; margin:0 0 12px; } h3 { margin:0 0 10px; } .lead { color:var(--muted); max-width:800px; }
+    .architecture { display:grid; grid-template-columns:repeat(5,1fr); align-items:stretch; gap:10px; margin-top:28px; } .layer { border-radius:14px; padding:18px; color:#fff; min-height:156px; position:relative; box-shadow:0 8px 22px #1725541c; }
+    .layer:not(:last-child)::after { content:'→'; position:absolute; right:-16px; top:50%; transform:translateY(-50%); color:#334155; font-weight:900; font-size:24px; z-index:1; }.client{background:#475569}.controller{background:var(--blue)}.service{background:var(--violet)}.repository{background:var(--cyan)}.entity{background:var(--green)}
+    .layer strong { display:block; font-size:1.05rem; }.layer small { display:block; margin-top:10px; color:#e0f2fe; }.client small,.entity small{color:#e2e8f0}
+    .flow { background:#fff; border:1px solid var(--line); border-radius:16px; padding:26px; overflow-x:auto; }.flow svg { display:block; margin:auto; min-width:720px; max-width:100%; } .flow text { font-family:Inter,Arial,sans-serif; fill:#172554; } .flow .label { font-size:14px; font-weight:700; } .flow .caption { font-size:12px; fill:#475569; }
+    .crud { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:22px; }.operation { background:white; border:1px solid var(--line); border-top:5px solid var(--blue); border-radius:12px; padding:15px; }.operation.create{border-top-color:var(--green)}.operation.read{border-top-color:var(--blue)}.operation.update{border-top-color:var(--amber)}.operation.delete{border-top-color:#dc2626}.method { font-weight:800; font-size:.82rem; letter-spacing:.06em; }.path { display:block; font-family:ui-monospace,monospace; margin:9px 0; font-size:.82rem; color:#334155; }.status { color:var(--muted); font-size:.9rem; }
+    .code-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }.code-card { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; }.code-card h3 { margin:0; padding:15px 18px; background:#eff6ff; border-bottom:1px solid var(--line); }.code-card p { padding:0 18px; color:var(--muted); }.code-card pre { margin:0; padding:17px; overflow:auto; background:#0f172a; color:#e2e8f0; font-size:.78rem; line-height:1.45; } code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .request { display:grid; grid-template-columns:1fr 1fr; gap:20px; }.request pre { margin:0; padding:19px; border-radius:12px; background:#0f172a; color:#e2e8f0; overflow:auto; }.note { border-left:4px solid var(--amber); padding:14px 17px; background:#fffbeb; border-radius:0 10px 10px 0; }.legend { display:flex; flex-wrap:wrap; gap:15px; color:var(--muted); font-size:.9rem; }.legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--blue); }.legend .business::before{background:var(--violet)}.legend .database::before{background:var(--green)}
+    @media (max-width:780px) { .architecture,.crud { grid-template-columns:1fr; } .layer:not(:last-child)::after { content:'↓'; top:auto; bottom:-22px; right:50%; transform:translateX(50%); }.code-grid,.request { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Spring REST CRUD<br>classic architecture</h1>
+    <p>A visual walkthrough of how a Motorcycle API moves from an HTTP request to a database row and back to a JSON response.</p>
+  </header>
+  <main>
+    <section>
+      <h2>The five layers</h2>
+      <p class="lead">Each layer has one responsibility. The controller does not access the database directly; it delegates to the service, which delegates to the repository.</p>
+      <div class="architecture">
+        <div class="layer client"><strong>1. Client</strong><small>Browser, mobile app, Postman or curl sends JSON over HTTP.</small></div>
+        <div class="layer controller"><strong>2. Controller</strong><small>Maps URL + HTTP method to a Java method.</small></div>
+        <div class="layer service"><strong>3. Service</strong><small>Applies business rules and coordinates the use case.</small></div>
+        <div class="layer repository"><strong>4. Repository</strong><small>Uses JPA to load, save, and delete entities.</small></div>
+        <div class="layer entity"><strong>5. Entity</strong><small>Maps Java fields to columns in the <code>motorcycles</code> table.</small></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Example flow: create a motorcycle</h2>
+      <div class="flow">
+        <svg viewBox="0 0 970 260" role="img" aria-label="POST request flow from client through Spring layers to database and back">
+          <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker><marker id="return" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#15803d"/></marker></defs>
+          <path d="M120 95 H210 M365 95 H455 M610 95 H700 M855 95 H910" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+          <path d="M910 190 H120" stroke="#15803d" stroke-width="3" fill="none" marker-end="url(#return)"/>
+          <g><rect x="15" y="55" width="105" height="80" rx="10" fill="#e2e8f0"/><text x="67" y="85" text-anchor="middle" class="label">Client</text><text x="67" y="108" text-anchor="middle" class="caption">POST JSON</text></g>
+          <g><rect x="210" y="55" width="155" height="80" rx="10" fill="#dbeafe"/><text x="287" y="85" text-anchor="middle" class="label">Controller</text><text x="287" y="108" text-anchor="middle" class="caption">create(requestBody)</text></g>
+          <g><rect x="455" y="55" width="155" height="80" rx="10" fill="#ede9fe"/><text x="532" y="85" text-anchor="middle" class="label">Service</text><text x="532" y="108" text-anchor="middle" class="caption">create(motorcycle)</text></g>
+          <g><rect x="700" y="55" width="155" height="80" rx="10" fill="#cffafe"/><text x="777" y="85" text-anchor="middle" class="label">Repository</text><text x="777" y="108" text-anchor="middle" class="caption">save(entity)</text></g>
+          <g><rect x="910" y="55" width="50" height="80" rx="10" fill="#dcfce7"/><text x="935" y="85" text-anchor="middle" class="label">DB</text><text x="935" y="108" text-anchor="middle" class="caption">row</text></g>
+          <text x="510" y="178" text-anchor="middle" class="caption" fill="#15803d">saved entity travels back through Repository → Service → Controller</text><text x="510" y="214" text-anchor="middle" class="label" fill="#15803d">201 Created + Motorcycle JSON</text>
+        </svg>
+      </div>
+    </section>
+
+    <section>
+      <h2>CRUD API contract</h2>
+      <div class="crud">
+        <div class="operation create"><div class="method">CREATE</div><span class="path">POST /api/motorcycles</span><span class="status">201 Created</span></div>
+        <div class="operation read"><div class="method">READ ALL</div><span class="path">GET /api/motorcycles</span><span class="status">200 OK</span></div>
+        <div class="operation read"><div class="method">READ ONE</div><span class="path">GET /api/motorcycles/{id}</span><span class="status">200 / 404</span></div>
+        <div class="operation update"><div class="method">UPDATE</div><span class="path">PUT /api/motorcycles/{id}</span><span class="status">200 / 404</span></div>
+        <div class="operation delete"><div class="method">DELETE</div><span class="path">DELETE /api/motorcycles/{id}</span><span class="status">204 / 404</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Layer implementation</h2>
+      <div class="code-grid">
+        <article class="code-card"><h3>Entity — <code>Motorcycle.java</code></h3><p>Defines the database model. One object is one table row.</p><pre><code>@Entity
+@Table(name = "motorcycles")
+public class Motorcycle {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+  private String brand;
+  private String model;
+  private Integer year;
+
+  // no-args constructor + getters/setters
+}</code></pre></article>
+        <article class="code-card"><h3>Repository — <code>MotorcycleRepository.java</code></h3><p>Spring Data supplies common CRUD methods automatically.</p><pre><code>public interface MotorcycleRepository
+    extends JpaRepository&lt;Motorcycle, Long&gt; {
+  // findAll(), findById(), save(),
+  // existsById() and deleteById()
+  // are inherited from JpaRepository
+}</code></pre></article>
+        <article class="code-card"><h3>Service — <code>MotorcycleService.java</code></h3><p>Contains the use cases and ensures an ID exists before update or delete.</p><pre><code>@Service
+public class MotorcycleService {
+  private final MotorcycleRepository repository;
+
+  public Motorcycle create(Motorcycle motorcycle) {
+    motorcycle.setId(null);
+    return repository.save(motorcycle);
+  }
+  public List&lt;Motorcycle&gt; findAll() {
+    return repository.findAll();
+  }
+  public Motorcycle findById(Long id) {
+    return repository.findById(id)
+      .orElseThrow(() -&gt; new MotorcycleNotFoundException(id));
+  }
+  public Motorcycle update(Long id, Motorcycle input) {
+    Motorcycle current = findById(id);
+    current.setBrand(input.getBrand());
+    current.setModel(input.getModel());
+    current.setYear(input.getYear());
+    return repository.save(current);
+  }
+  public void delete(Long id) {
+    if (!repository.existsById(id)) throw new MotorcycleNotFoundException(id);
+    repository.deleteById(id);
+  }
+}</code></pre></article>
+        <article class="code-card"><h3>Controller — <code>MotorcycleController.java</code></h3><p>Exposes service use cases as HTTP endpoints.</p><pre><code>@RestController
+@RequestMapping("/api/motorcycles")
+public class MotorcycleController {
+  private final MotorcycleService service;
+
+  @PostMapping @ResponseStatus(CREATED)
+  Motorcycle create(@RequestBody Motorcycle body) { return service.create(body); }
+  @GetMapping List&lt;Motorcycle&gt; all() { return service.findAll(); }
+  @GetMapping("/{id}") Motorcycle one(@PathVariable Long id) { return service.findById(id); }
+  @PutMapping("/{id}") Motorcycle update(@PathVariable Long id, @RequestBody Motorcycle body) { return service.update(id, body); }
+  @DeleteMapping("/{id}") @ResponseStatus(NO_CONTENT)
+  void delete(@PathVariable Long id) { service.delete(id); }
+}</code></pre></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>HTTP example</h2>
+      <div class="request"><pre><code>POST /api/motorcycles
+Content-Type: application/json
+
+{
+  "brand": "Yamaha",
+  "model": "MT-07",
+  "year": 2024
+}</code></pre><pre><code>HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 1,
+  "brand": "Yamaha",
+  "model": "MT-07",
+  "year": 2024
+}</code></pre></div>
+    </section>
+    <section class="note"><strong>Project note.</strong> The entity uses the <code>motorcycles</code> table and maps its Java <code>year</code> field to the <code>manufacture_year</code> database column, avoiding a reserved SQL word. The project’s <code>MotorcycleRepo</code> can also be named <code>MotorcycleRepository</code>; both are valid when imports match.</section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,182 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-users
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_users
+                    nullable: false
+              - column: { name: first_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: last_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: email, type: VARCHAR(255) }
+              - column: { name: password_hash, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: DATE }
+              - column: { name: updated_at, type: DATE }
+
+  - changeSet:
+      id: 002-create-riders
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: riders
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_riders
+                    nullable: false
+              - column: { name: user_id, type: BIGINT }
+              - column: { name: license_type, type: VARCHAR(255) }
+              - column: { name: license_year, type: INT }
+              - column: { name: experience_level, type: VARCHAR(255) }
+              - column: { name: primary_usage, type: VARCHAR(255) }
+              - column: { name: estimated_annual_distance, type: INT }
+
+  - changeSet:
+      id: 003-create-motorcycles
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: motorcycles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_motorcycles
+                    nullable: false
+              - column: { name: user_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: brand, type: VARCHAR(255) }
+              - column: { name: model, type: VARCHAR(255) }
+              - column: { name: manufacture_year, type: INT }
+              - column: { name: engine_capacity, type: INT }
+              - column: { name: power, type: INT }
+              - column: { name: fuel_type, type: VARCHAR(255) }
+              - column: { name: registration_number, type: VARCHAR(255) }
+              - column: { name: purchase_date, type: DATE }
+              - column: { name: current_mileage, type: INT }
+              - column: { name: average_consumption, type: DOUBLE }
+              - column: { name: image_url, type: VARCHAR(255) }
+              - column: { name: primary_motorcycle, type: BOOLEAN }
+              - column: { name: created_at, type: DATE }
+              - column: { name: updated_at, type: DATE }
+        - addForeignKeyConstraint:
+            baseTableName: motorcycles
+            baseColumnNames: user_id
+            constraintName: fk_motorcycles_user
+            referencedTableName: users
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 004-create-maintenance-records
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: maintenance_records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_maintenance_records
+                    nullable: false
+              - column: { name: motorcycle_id, type: BIGINT }
+              - column: { name: maintenance_type, type: VARCHAR(255) }
+              - column: { name: status, type: VARCHAR(255) }
+              - column: { name: completion_date, type: DATE }
+              - column: { name: planned_date, type: DATE }
+              - column: { name: mileage, type: INT }
+              - column: { name: planned_mileage, type: INT }
+              - column: { name: cost, type: "DECIMAL(19,2)" }
+              - column: { name: service_provider, type: VARCHAR(255) }
+              - column: { name: notes, type: VARCHAR(255) }
+              - column: { name: created_at, type: DATE }
+              - column: { name: updated_at, type: DATE }
+        - addForeignKeyConstraint:
+            baseTableName: maintenance_records
+            baseColumnNames: motorcycle_id
+            constraintName: fk_maintenance_records_motorcycle
+            referencedTableName: motorcycles
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 005-create-rides
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: rides
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_rides
+                    nullable: false
+              - column: { name: motorcycle_id, type: BIGINT }
+              - column: { name: title, type: VARCHAR(255) }
+              - column: { name: planned_date, type: DATE }
+              - column: { name: departure_time, type: TIME }
+              - column: { name: departure_location, type: VARCHAR(255) }
+              - column: { name: destination, type: VARCHAR(255) }
+              - column: { name: estimated_distance, type: INT }
+              - column: { name: actual_distance, type: INT }
+              - column: { name: estimated_duration, type: INT }
+              - column: { name: actual_duration, type: INT }
+              - column: { name: ride_type, type: VARCHAR(255) }
+              - column: { name: use_highway, type: BOOLEAN }
+              - column: { name: use_tolls, type: BOOLEAN }
+              - column: { name: planned_breaks, type: INT }
+              - column: { name: fuel_cost, type: "DECIMAL(19,2)" }
+              - column: { name: status, type: VARCHAR(255) }
+              - column: { name: rating, type: INT }
+              - column: { name: notes, type: VARCHAR(255) }
+              - column: { name: created_at, type: DATE }
+              - column: { name: updated_at, type: DATE }
+        - addForeignKeyConstraint:
+            baseTableName: rides
+            baseColumnNames: motorcycle_id
+            constraintName: fk_rides_motorcycle
+            referencedTableName: motorcycles
+            referencedColumnNames: id
+
+  - changeSet:
+      id: 006-create-ride-checklist-items
+      author: rider-companion
+      changes:
+        - createTable:
+            tableName: ride_checklist_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_ride_checklist_items
+                    nullable: false
+              - column: { name: ride_id, type: BIGINT }
+              - column: { name: label, type: VARCHAR(255) }
+              - column: { name: checked, type: BOOLEAN }
+        - addForeignKeyConstraint:
+            baseTableName: ride_checklist_items
+            baseColumnNames: ride_id
+            constraintName: fk_ride_checklist_items_ride
+            referencedTableName: rides
+            referencedColumnNames: id

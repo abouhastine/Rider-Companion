@@ -1,0 +1,25 @@
+{
+  "name": "Rider Companion",
+
+  "image": "mcr.microsoft.com/devcontainers/java:1-17-bookworm",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "postCreateCommand": "npm install -g @openai/codex && java -version && node -v && npm -v && git --version && codex --version && cd backend/rider-companion && ./mvnw -q -DskipTests compile",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot",
+        "vscjava.vscode-maven",
+        "redhat.java"
+      ]
+    }
+  }
+}
