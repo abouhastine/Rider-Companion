@@ -24,7 +24,7 @@ const config: ExpoConfig = {
     package: 'com.ridercompanion.beta',
     adaptiveIcon: { backgroundColor: '#172033' },
     usesCleartextTraffic: local || undefined,
-  },
+  } as ExpoConfig['android'] & { usesCleartextTraffic?: boolean },
 };
 
 export default config;
