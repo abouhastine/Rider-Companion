@@ -50,17 +50,17 @@ The iOS and Android private beta lives in `mobile-app/` and uses Expo. It covers
 ```bash
 cd mobile-app
 cp .env.example .env
-npm install
+npm ci
 npm run typecheck
 npm test
-npx expo start
+npm run web
 ```
 
-Set `EXPO_PUBLIC_API_BASE_URL` to the supplied **HTTPS** demo API before starting or building the app. Never use production or identifiable rider data in this beta; all data and motorcycle photos must be synthetic or anonymized.
+`.env` defaults to `APP_ENV=local` and `http://localhost:8081`. Use an EAS `development` build with `npm run ios` or `npm run android` for local native HTTP testing; a physical device needs the development machine's LAN IP instead of `localhost`. `preview` and `production` require an HTTPS `EXPO_PUBLIC_API_BASE_URL`. Never use production or identifiable rider data in this beta; all data and motorcycle photos must be synthetic or anonymized.
 
-Create internal builds with `npx eas build --profile ios-beta --platform ios` for TestFlight or `npx eas build --profile android-beta --platform android` for Play internal testing. EAS/store credentials and final bundle identifiers must be configured before submission. The beta is English-only, online-only, and excludes camera upload, notifications, offline mode, localization, GPS, weather, community features, and AI.
+Create an internal build with `npx eas build --profile preview --platform ios` or `npx eas build --profile preview --platform android`. EAS/store credentials and final bundle identifiers must be configured before submission. The beta is English-only, online-only, and excludes camera upload, notifications, offline mode, localization, GPS, weather, community features, and AI.
 
-See [the mobile-beta specification](docs/specs/rider-companion-mobile-beta-spec.md) and [implementation status](docs/specs/rider-companion-mobile-beta-implementation-status.md).
+See [the mobile setup and test plan](docs/mobile-app-setup-and-test-plan.md), [mobile-beta specification](docs/specs/rider-companion-mobile-beta-spec.md), and [implementation status](docs/specs/rider-companion-mobile-beta-implementation-status.md).
 ## diagramme UML
 ```text
 +------------------+

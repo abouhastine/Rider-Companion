@@ -10,7 +10,8 @@
     "web": "expo start --web --port 19007",
     "lint": "eslint . --max-warnings 0",
     "test": "jest --runInBand",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify:contract": "node scripts/verify-mobile-contract.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",

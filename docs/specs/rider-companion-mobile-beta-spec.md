@@ -16,7 +16,12 @@ Domain operations use the existing authenticated `/api/me/**` endpoints, which e
 
 ## Beta environment and policy
 
-`EXPO_PUBLIC_API_BASE_URL` must be an HTTPS demo hostname. Use only synthetic or anonymized rider, motorcycle, maintenance, ride, and image data. Bundle IDs, signing, EAS credentials, store access, and the demo hostname are release prerequisites.
+The one API setting is `EXPO_PUBLIC_API_BASE_URL`. `APP_ENV=local` permits HTTP only in Expo Web,
+emulator/simulator, and EAS `development` builds; use the development machine's LAN IP instead of
+`localhost` on a physical device. `APP_ENV=preview` and `APP_ENV=production` require an HTTPS demo
+hostname and contain no native cleartext exception. Use only synthetic or anonymized rider,
+motorcycle, maintenance, ride, and image data. Bundle IDs, signing, EAS credentials, store access,
+and the demo hostname are release prerequisites.
 
 Excluded: account deletion, notifications, offline persistence, camera upload, localization, GPS/navigation, weather, community features, and AI.
 
