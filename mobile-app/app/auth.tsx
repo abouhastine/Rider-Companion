@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Button, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { mobileAuthApi } from '../src/api';
 import { useSession } from '../src/session';
