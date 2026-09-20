@@ -1,8 +1,7 @@
-import { Dashboard, DirectionsBike, Logout, Map, Menu, Settings, Build, PlayArrow } from '@mui/icons-material';
+import { Dashboard, DirectionsBike, Logout, Map, Menu, Settings, Build } from '@mui/icons-material';
 import {
   AppBar,
   Avatar,
-  Button,
   Box,
   Divider,
   Drawer,
@@ -80,7 +79,6 @@ function Navigation({ close }: { close?: () => void }) {
           <ListItemText primary="Sign out" />
         </ListItemButton>
       </List>
-      <Button component={NavLink} to="/rides/new" fullWidth variant="contained" startIcon={<PlayArrow />} sx={{ mt: 'auto', position: 'absolute', bottom: 26, left: 20, width: 240 }}>Start ride</Button>
     </Box>
   );
 }

@@ -8,19 +8,26 @@ export function DashboardPage() {
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: meApi.dashboard });
   const data = dashboard.data;
   const bike = data?.primaryMotorcycle;
+  const primaryImage = useQuery({
+    queryKey: ['motorcycle-image', bike?.id],
+    queryFn: () => meApi.image(bike!.id),
+    enabled: Boolean(bike?.hasImage),
+  });
   const stats = data
     ? [
-        { label: 'Motorcycles', value: data.motorcyclesCount, icon: <DirectionsBike /> },
+        { label: 'Motorcycles', value: data.motorcyclesCount, icon: <DirectionsBike />, to: '/garage' },
         {
           label: 'Maintenance spend',
           value: `€${data.statistics.maintenanceTotalCost}`,
           icon: <Build />,
+          to: '/maintenance',
         },
-        { label: 'Planned rides', value: data.statistics.plannedRidesCount, icon: <Map /> },
+        { label: 'Planned rides', value: data.statistics.plannedRidesCount, icon: <Map />, to: '/rides' },
         {
           label: 'Estimated distance',
           value: `${data.statistics.estimatedRideDistance} km`,
           icon: <TrendingUp />,
+          to: '/rides',
         },
       ]
     : [];
@@ -38,19 +45,21 @@ export function DashboardPage() {
       <Grid container spacing={2.25} mb={3}>
         {stats.map((stat) => (
           <Grid size={{ xs: 6, md: 3 }} key={stat.label}>
-            <SectionCard sx={{ borderColor: '#40506f' }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="start">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    {stat.label}
-                  </Typography>
-                  <Typography variant="h5" mt={0.5}>
-                    {stat.value}
-                  </Typography>
-                </Box>
-                <Box color="primary.main" sx={{ p: 1, border: '1px solid #6a3a2e', borderRadius: 1 }}>{stat.icon}</Box>
-              </Stack>
-            </SectionCard>
+            <Box component={RouterLink} to={stat.to} sx={{ color: 'inherit', display: 'block', textDecoration: 'none' }}>
+              <SectionCard sx={{ borderColor: '#40506f' }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="start">
+                  <Box>
+                    <Typography color="text.secondary" variant="body2">
+                      {stat.label}
+                    </Typography>
+                    <Typography variant="h5" mt={0.5}>
+                      {stat.value}
+                    </Typography>
+                  </Box>
+                  <Box color="primary.main" sx={{ p: 1, border: '1px solid #6a3a2e', borderRadius: 1 }}>{stat.icon}</Box>
+                </Stack>
+              </SectionCard>
+            </Box>
           </Grid>
         ))}
       </Grid>
@@ -73,7 +82,7 @@ export function DashboardPage() {
                   position: 'relative',
                   bgcolor: '#0b172a',
                   color: 'white',
-                  backgroundImage: `linear-gradient(90deg, rgba(8,18,36,.94), rgba(8,18,36,.3)), url(https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1400&q=80)`,
+                  backgroundImage: `linear-gradient(90deg, rgba(8,18,36,.94), rgba(8,18,36,.3)), url(${primaryImage.data ?? 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1400&q=80'})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}

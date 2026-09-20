@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Delete, Edit } from '@mui/icons-material';
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -14,8 +15,9 @@ import {
   Grid2 as Grid,
   Stack,
   Typography,
+  TextField,
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -30,6 +32,23 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meApi } from '../../services/api';
 import { motorcycleSchema, type MotorcycleValues } from '../shared/schemas';
+
+// Initial catalogue based on manufacturers listed by the Motorcycle Safety Foundation.
+const motorcycleBrands = [
+  'BMW',
+  'BRP/Can-Am',
+  'Ducati',
+  'Harley-Davidson',
+  'Honda',
+  'Indian',
+  'Kawasaki',
+  'KTM',
+  'Piaggio',
+  'Polaris',
+  'Suzuki',
+  'Triumph',
+  'Yamaha',
+];
 export function GaragePage() {
   const bikes = useQuery({ queryKey: ['motorcycles'], queryFn: meApi.motorcycles });
   const queryClient = useQueryClient();
@@ -52,18 +71,21 @@ export function GaragePage() {
     <Box className="page-content">
       <PageHeader
         eyebrow="Virtual garage"
-        title="Your motorcycles"
+        title="Virtual garage"
         action={
           <AddButton component={RouterLink} to="/garage/new">
             Add motorcycle
           </AddButton>
         }
       />
+      <Typography color="text.secondary" sx={{ mt: -2.5, mb: 3 }}>
+        Manage your fleet and track technical specifications.
+      </Typography>
       <Grid container spacing={3}>
         {bikes.data?.map((bike) => (
-          <Grid size={{ xs: 12, md: 6 }} key={bike.id}>
-            <Card sx={{ height: '100%', borderRadius: 3, overflow: 'hidden' }}>
-              <MotorcycleImage bike={bike} />
+          <Grid size={{ xs: 12, md: bike.primaryMotorcycle ? 8 : 4 }} key={bike.id}>
+            <Card sx={{ height: '100%', borderRadius: 2, overflow: 'hidden', bgcolor: '#121f36', borderColor: bike.primaryMotorcycle ? 'primary.main' : '#34425f' }}>
+              <MotorcycleImage bike={bike} height={bike.primaryMotorcycle ? 330 : 220} />
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="start">
                   <Box>
@@ -129,7 +151,7 @@ export function GaragePage() {
     </Box>
   );
 }
-function MotorcycleImage({ bike }: { bike: import('../../services/api').MotorcycleApi }) {
+function MotorcycleImage({ bike, height = 220 }: { bike: import('../../services/api').MotorcycleApi; height?: number }) {
   const image = useQuery({
     queryKey: ['motorcycle-image', bike.id],
     queryFn: () => meApi.image(bike.id),
@@ -138,7 +160,7 @@ function MotorcycleImage({ bike }: { bike: import('../../services/api').Motorcyc
   return (
     <CardMedia
       component="img"
-      height="220"
+      height={height}
       image={
         image.data ??
         'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80'
@@ -249,15 +271,42 @@ export function MotorcycleFormPage() {
         >
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <FormTextField
+              <Controller
+                control={control}
                 name="brand"
-                label="Brand"
+                render={({ field }) => (
+                  <Autocomplete
+                    freeSolo
+                    options={motorcycleBrands}
+                    value={field.value}
+                    inputValue={field.value}
+                    onChange={(_, value) => field.onChange(value ?? '')}
+                    onInputChange={(_, value, reason) => {
+                      if (reason === 'input' || reason === 'clear') field.onChange(value);
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Brand"
+                        required
+                        error={Boolean(errors.brand)}
+                        helperText={errors.brand?.message}
+                      />
+                    )}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormTextField
+                name="model"
+                label="Model"
                 register={register}
                 errors={errors}
                 required
               />
             </Grid>
-            <Grid size={12}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Button component="label" variant="outlined">
                 {imageFile ? `Selected: ${imageFile.name}` : 'Upload motorcycle image (optional)'}
                 <input
@@ -273,15 +322,6 @@ export function MotorcycleFormPage() {
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <FormTextField
-                name="model"
-                label="Model"
-                register={register}
-                errors={errors}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormTextField
                 name="year"
                 label="Year"
                 type="number"
@@ -290,7 +330,7 @@ export function MotorcycleFormPage() {
                 required
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormTextField
                 name="engineCapacity"
                 label="Engine capacity (cc)"
@@ -300,7 +340,7 @@ export function MotorcycleFormPage() {
                 required
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormTextField
                 name="power"
                 label="Power (hp)"
@@ -346,7 +386,7 @@ export function MotorcycleFormPage() {
                 errors={errors}
               />
             </Grid>
-            <Grid size={12}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormToggle name="primary" label="Set as primary motorcycle" control={control} />
             </Grid>
           </Grid>

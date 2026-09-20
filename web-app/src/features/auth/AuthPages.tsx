@@ -176,6 +176,7 @@ export function SignUpPage() {
 }
 export function ProfilePage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const profile = useQuery({ queryKey: ['profile'], queryFn: meApi.profile });
   const {
     register,
@@ -218,7 +219,10 @@ export function ProfilePage() {
         primaryUsage: values.primaryUsage,
         estimatedAnnualDistance: values.annualDistance,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      navigate('/dashboard');
+    },
   });
   return (
     <Box className="page-content">
